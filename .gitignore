@@ -1,0 +1,18 @@
+.DS_Store
+Icon?
+Code/.DS_Store
+Code/*.Rproj
+Code/.Rproj.user
+Code/.Rhistory
+Code/Old/
+Code/Untitled*
+Code/rough_calcs.R
+Code/*_old.R
+Code/process_cdph_data_with_output.R
+Data/
+Figures/
+IRB/
+Lit/
+Manuscript/
+Pre-analysis plan/
+Presentations/
