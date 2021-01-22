@@ -4,6 +4,7 @@ library(reshape2)
 library(abind)
 library(doParallel)
 library(data.table)
+library(truncnorm)
 library(matrixStats)
 library(ggplot2)
 library(viridis)
@@ -18,7 +19,15 @@ registerDoParallel(detectCores()-1)
 # registerDoParallel(4)
 
 ## Inputs
-dir0 <- "../Data/CalibrationDeathIFRModel/"
+dir0 <- "../Data/CalibrationDeathIFRModel1/"
+
+# Load synthetic population data frame with risk estimates added
+df <- readRDS("../Data/CA_pop_with_risk_ests_deaths1.RDS")
+# # Subset to Alameda County for testing
+# df1 <- df
+# df <- df1[df1$county_res=="Alameda",]
+
+# Multiplier for death rate from calibration to CalCAT forecasts
 deaths_ratio <- readRDS(paste0(dir0,"deaths_multiplier.RDS"))
 
 # Number of simulations
@@ -27,11 +36,29 @@ n_sim <- 1000 #500 #100
 # Outcome to optimize allocation by
 by <- "DALYs" # use "" for deaths
 
-# Set vaccine parameters
-v_e <- 0.9 # vaccine efficacy
+# Vaccine parameters
+# vaccine efficacy
+# v_e <- 0.6 #c(0.6,0.9) 
+v_e <- vector("list",3)
+v_e[1:2] <- c(0.6,0.9)
+v_e_age <- rep(0.6,nrow(df))
+v_e_age[df$age_cat=="60-69"] <- 0.5
+v_e_age[df$age_cat=="70-79"] <- 0.4
+v_e_age[df$age_cat=="80+"] <- 0.3
+v_e[[3]] <- v_e_age
+v_e_nms <- c(paste0(as.character(100*unlist(v_e[1:2])),"prcnt_eff"),paste0(100*v_e[[3]][df$age_cat=="<10"][1],"prcnt_age_dep_eff"))
 n_v <- c(2e6,5e6,10e6) # number of vaccines
-t_sim <- 180 #c(120,180,270) # prediction time horizon in days
-r <- 1.1^(1/28) # per day multiplier for death risk = 10% increase every 4 weeks
+t_sim <- round(365/2) #c(120,180,270) # prediction time horizon in days
+r <- 1.1^(1/round(365/2)) # per day multiplier for death risk = 10% increase over 6 months
+
+# Prioritization strategies
+# 1: random allocation
+# 2: special population targeting
+# 3: age targeting
+# 4: essential worker targeting
+# 5: comorbidity targeting
+# 6: optimal allocation
+strategies <- 1:6
 
 # Median durations of illness and disability weights for mild, moderate and severe cases
 d_mi <- 7 # days
@@ -47,15 +74,7 @@ w <- c(w_mi,w_m,w_s)
 demogrphcs <- c("county_res","age_cat","sex","race_ethnicity")
 comorbs <- c("asthma","diabetes","smoker","heart.disease","heart.failure","hypertension","obesity")
 lbls <- c("no vaccination","random","special populations","age","essential workers","comorbidities")
-spec_pops <- c("non_spec_pop","HCW","prisoner","SNF","education","homeless","EW")
-
-# Load synthetic population data frame with risk estimates added
-df <- readRDS("../Data/CA_pop_with_risk_ests_deaths.RDS")
-# # Subset to Alameda County for testing
-# df1 <- df
-# df <- df1[df1$county_res=="Alameda",]
-# # Add ID variable
-# df$id <- 1:nrow(df)
+spec_pops <- c("non-special-population","HCW","prisoner","SNF","education","homeless","frontline essential worker","non-frontline essential worker","ALF")
 
 # Create data table of different risk groups
 cols <- c(demogrphcs,"special.population",comorbs,"grp")
@@ -71,9 +90,9 @@ IFR_ratio <- readRDS("../Data/IFR_ratio.RDS") # estimated ratio of CA IFR to O'D
 # Find unique risk groups
 agg_df <- unique(df,by = "grp")
 # Calculate RR-adjusted death risk
-agg_df[,lambda_adj := lambda * RR]
+agg_df[,lambda_adj := exp(log_lambda) * RR]
 
-# Calculate infection risk from death risk using IFR
+# Calculate infection risk from death risk using CA-corrected IFR
 agg_df[,lambda_inf := lambda_adj/IFR]
 
 # Calculate clinical case risk from infection risk using age-dependent clinical fraction
@@ -99,33 +118,46 @@ agg_df[,lambda_DALYs:=calc_DALYs_from_deaths(agg_df[,lambda_adj],agg_df[,mean_li
 # Get risk group IDs from synthetic population data table
 grp <- df[,grp]
 
-# Delete synthetic population data table
-rm(df)
+# # Delete synthetic population data table
+# rm(df)
 
 ## Simulate outcomes (cases, hospitalisations and deaths) under no vaccination and vaccination
-dir1 <- "PredictionsDeathIFRModel/"
+dir1 <- "PredictionsDeathIFRModel1/"
 dir.create(paste0("../Data/",dir1))
 
-# tstart <- Sys.time()
-# 
-# # for (j in 1:length(t_sim)){
-# #   foreach(i=1:length(ldf)) %dopar% {
-# #     out <- simulate_deaths(ldf[[i]],v_e,t_sim[j],r,deaths_ratio[1],n_sim,d[3],w[3])
-# #     # Save output
-# #     saveRDS(out,file = paste0("../Data/",dir1,"pred_outcomes_",names(ldf)[i],"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
-# #   }
-# # }
-# 
+tstart <- Sys.time()
+
 # for (j in 1:length(t_sim)){
-#   foreach(i=1:n_sim) %dopar% {
-#     out <- simulate_deaths(df,v_e,t_sim[j],r,deaths_ratio[1],1,d[3],w[3])
+#   foreach(i=1:length(ldf)) %dopar% {
+#     out <- simulate_deaths(ldf[[i]],v_e,t_sim[j],r,deaths_ratio[1],n_sim,d[3],w[3])
 #     # Save output
-#     saveRDS(out,file = paste0("../Data/",dir1,"pred_outcomes_",i,"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
+#     saveRDS(out,file = paste0("../Data/",dir1,"pred_outcomes_",names(ldf)[i],"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
 #   }
 # }
-# 
-# tend <- Sys.time()
-# print(tend-tstart)
+
+# N <- nrow(df)
+# rl <- foreach(i=1:n_sim) %dopar% {
+#   r1 <- rtruncnorm(N,a = df[,log_lambda_LB],b = df[,log_lambda_UB],mean = df[,log_lambda],sd = df[,se_log_lambda])
+#   r2 <- rtruncnorm(N,a = df[,RR_LB]-1e-15,b = df[,RR_UB]+1e-15,mean = df[,RR],sd = df[,se_RR])
+#   list(r1,r2)
+# }
+#
+# r_log_lambda <- do.call(cbind,lapply(rl,"[[",1))
+# r_RR <- do.call(cbind,lapply(rl,"[[",2))
+
+for (i in 3){ #1:length(v_e)){
+  for (j in 1:length(t_sim)){
+    foreach(k=1:n_sim) %dopar% {
+      # out <- simulate_deaths(df,exp(r_log_lambda[,i]),r_RR[,i],v_e,t_sim[j],r,deaths_ratio[1],1,d[3],w[3])
+      out <- simulate_deaths(df,v_e[[i]],t_sim[j],r,deaths_ratio[1],1,d[3],w[3])
+      # Save output
+      saveRDS(out,file = paste0("../Data/",dir1,"pred_outcomes_",k,"_",v_e_nms[i],"_",t_sim[j],"days.RDS"))
+    }
+  }  
+}
+
+tend <- Sys.time()
+print(tend-tstart)
 
 ## Aggregate output
 tstart <- Sys.time()
@@ -137,7 +169,7 @@ tstart <- Sys.time()
 #   x <- foreach(i=1:length(ldf),.combine = rbind) %dopar% {
 #     # agg_out <- foreach(i=1:10,.combine = acomb,.multicombine = T) %dopar% {
 #     out <- readRDS(paste0("../Data/",dir1,"pred_outcomes_",names(ldf)[i],"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
-#     
+#
 #     # # Process simulated output
 #     # # tstart2 <- Sys.time()
 #     # # lmean_agg_out[[i]] <- process_predictions(out,ldf[[i]],n_sim)
@@ -147,9 +179,9 @@ tstart <- Sys.time()
 #     process_predictions_deaths(out,ldf[[i]],n_sim,IFR_long,IFR_ratio,p_clin_dt,d,w)
 #     # tend2 <- Sys.time()
 #     # print(tend2-tstart2)
-#   }  
+#   }
 #   # mean_agg_out <- do.call(rbind,lmean_agg_out)
-#   
+#
 #   # Save output
 #   saveRDS(x,paste0(dir1,"pred_vacc_impact_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
 #   # mean_agg_out[[j]] <- x
@@ -157,89 +189,141 @@ tstart <- Sys.time()
 
 # proc_res <- function(i){
 #   out <- readRDS(paste0("../Data/",dir1,"pred_outcomes_",i,"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
-#   
+#
 #   # Process simulated output
 #   agg_out <- process_predictions_deaths(out,df,1,risk_grp_dt,IFR_long,IFR_ratio,p_clin_dt,d,w)
-#   
+#
 #   # Run vaccination prioritization strategies
-#   l <- run_prioritisation_strategies2(agg_out,n_v[k],fdir,agg_df,"",comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
-#   
-#   return(l)
+#   lres <- run_prioritisation_strategies2(agg_out,n_v[l],fdir,agg_df,"",comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
+#
+#   return(lres)
 # }
 
-for (j in 1:length(t_sim)){
-  for (k in 1:length(n_v)){
-    # tstart <- Sys.time()
-    # l <- vector("list",n_sim)
-    # x <- foreach(i=1:n_sim,.combine = rbind) %dopar% {
-    # l <- foreach(i=1:n_sim,.combine = 'comb',.multicombine = T,.init = list(list(),list())) %dopar% {
-    # for (i in 1:n_sim){
-    l <- foreach(i=1:n_sim) %dopar% {
-      out <- readRDS(paste0("../Data/",dir1,"pred_outcomes_",i,"_",100*v_e,"prcnt_eff_",t_sim[j],"days.RDS"))
-
-      # Process simulated output
-      agg_out <- process_predictions_deaths(out,grp,1,risk_grp_dt,IFR_long,IFR_ratio,p_clin_dt,d,w)
-
-      # Run vaccination prioritization strategies
-      # l[[i]] <- run_prioritisation_strategies2(agg_out,n_v[k],fdir,agg_df,"",comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
-      run_prioritisation_strategies2(agg_out,n_v[k],fdir,agg_df,by,comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
+for (i in 3){ #1:length(v_e)){
+  for (j in 1:length(t_sim)){
+    for (l in 1:length(n_v)){
+      # tstart <- Sys.time()
+      # lres <- vector("list",n_sim)
+      # x <- foreach(k=1:n_sim,.combine = rbind) %dopar% {
+      # lres <- foreach(k=1:n_sim,.combine = 'comb',.multicombine = T,.init = list(list(),list())) %dopar% {
+      # for (k in 1:n_sim){
+      lres <- foreach(k=1:n_sim) %dopar% {
+        out <- readRDS(paste0("../Data/",dir1,"pred_outcomes_",k,"_",v_e_nms[i],"_",t_sim[j],"days.RDS"))
+        
+        # Process simulated output
+        agg_out <- process_predictions_deaths(out,grp,1,risk_grp_dt,IFR_long,IFR_ratio,p_clin_dt,d,w)
+        
+        # Run vaccination prioritization strategies
+        # lres[[k]] <- run_prioritisation_strategies2(agg_out,n_v[l],fdir,agg_df,"",comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
+        run_prioritisation_strategies2(agg_out,n_v[l],fdir,agg_df,strategies,by,comorbs,dir1,t_sim[j],lbls,"YlGnBu",spec_pops)
+      }
+      # lres <- mclapply(1:n_sim,proc_res,mc.cores = 6)
+      # tend <- Sys.time()
+      # print(tend-tstart)
+      
+      # Row bind output lists
+      res <- do.call(rbind,lapply(lres,"[[",1))
+      lx <- vector("list",length(lres[[1]])-1)
+      for (m in 1:(length(lres[[1]])-1)){
+        lx[[m]] <- do.call(rbind,lapply(lres,"[[",m+1))
+      }
+      
+      # Save output
+      saveRDS(res,paste0("../Data/",dir1,"pred_vacc_impact_",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".RDS"))
+      saveRDS(lx,paste0("../Data/",dir1,"pred_vacc_impact_by_covar",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".RDS"))
     }
-    # l <- mclapply(1:n_sim,proc_res,mc.cores = 6)
-    # tend <- Sys.time()
-    # print(tend-tstart)
-    
-    # Row bind output lists
-    res <- do.call(rbind,lapply(l,"[[",1))
-    lx <- vector("list",length(l[[1]])-1)
-    for (m in 1:(length(l[[1]])-1)){
-      lx[[m]] <- do.call(rbind,lapply(l,"[[",m+1))
-    }
-    
-    # Save output
-    saveRDS(res,paste0("../Data/",dir1,"pred_vacc_impact_",n_v[k],"doses_",100*v_e,"prcnt_eff_",t_sim[j],"days",by,".RDS"))
-    saveRDS(lx,paste0("../Data/",dir1,"pred_vacc_impact_by_covar",n_v[k],"doses_",100*v_e,"prcnt_eff_",t_sim[j],"days",by,".RDS"))
-  }
+  }  
 }
 
 tend <- Sys.time()
 print(tend-tstart)
 
-ord <- order_by_risk(agg_df,by)
-x <- agg_df[match(ord,grp),]
-x[,comorb:=as.numeric(rowSums2(as.matrix(x[,comorbs,with=F]))!=0)]
+## Calculate summary statistics and plot results
+# Reorder population according to a priori optimal allocation order based on risk
+# ord <- order_by_risk(agg_df,by)
+# x <- agg_df[match(ord,grp),]
+x <- agg_df
+HCW_SNF_idx <- (x$special.population %in% c(1,3,8))
+x_HCW_SNF <- x[HCW_SNF_idx,]
+x_other <- x[!HCW_SNF_idx,]
+
+agg_df_other <- agg_df[grp %in% x_other$grp,]
+ord <- order_by_risk(agg_df_other,by)
+x_other <- x_other[match(ord,x_other$grp),]
+x <- rbind(x_HCW_SNF,x_other)
+
+x[,comorb:=as.integer(rowSums2(as.matrix(x[,comorbs,with=F]))!=0)]
 x[is.na(population),population:=0]
 x[,cum_pop:=cumsum(population)]
+
 setDF(x)
 
-## Calculate summary statistics and plot results
-for (j in 1:length(t_sim)){
-  for (k in 1:length(n_v)){
-    res <- readRDS(paste0("../Data/",dir1,"pred_vacc_impact_",n_v[k],"doses_",100*v_e,"prcnt_eff_",t_sim[j],"days",by,".RDS"))
-    lx <- readRDS(paste0("../Data/",dir1,"pred_vacc_impact_by_covar",n_v[k],"doses_",100*v_e,"prcnt_eff_",t_sim[j],"days",by,".RDS"))
+# Strategies and risk factors to plot performance for
+strategies1 <- strategies[1:(length(strategies)-1)]
+grp1 <- c(demogrphcs,"special.population","comorb")
+lbls1 <- c("County","Age","Sex","Race/ethnicity","Special population","Comorbidity")
+vrble <- c("case","death","DALYs")
+for (i in 1:length(v_e)){
+  for (j in 1:length(t_sim)){
+    for (l in 1:length(n_v)){
+      res <- readRDS(paste0("../Data/",dir1,"pred_vacc_impact_",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".RDS"))
+      lx <- readRDS(paste0("../Data/",dir1,"pred_vacc_impact_by_covar",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".RDS"))
 
-    # Calculate summary statistics across simulations
-    setDT(res)
-    names(res)[names(res)=="Strategy"] <- "strategy"
-    cols1 <- names(res)[names(res)!="strategy"]
-    res_ss <- calc_summary_stats(res,cols1,"strategy")
-    write.csv(res_ss,paste0("../Data/",dir1,"pred_cases_deaths_DALYs_all_strategies_",n_v[k],"doses_",t_sim[j],"days",by,".csv"),row.names = F)
+      # Calculate summary statistics across simulations
+      setDT(res)
+      # names(res)[names(res)=="Strategy"] <- "strategy"
+      cols1 <- names(res)[names(res)!="strategy"]
+      res_ss <- calc_summary_stats(res,cols1,"strategy")
+      write.csv(res_ss,paste0("../Data/",dir1,"pred_cases_deaths_DALYs_all_strategies_",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".csv"),row.names = F)
 
-    grp1 <- c(demogrphcs,"special.population","comorb")
-    lbls1 <- c("County","Age","Sex","Race/ethnicity","Special population","Comorbidity")
-    lx_ss <- vector("list",length(lx))
-    for (i in 1:length(lx)){
-      cols2 <- names(lx[[i]])[!(names(lx[[i]]) %in% c("strategy",grp1[i]))]
-      lx_ss[[i]] <- calc_summary_stats(lx[[i]],cols2,c("strategy",grp1[i]))
+      lx_ss <- vector("list",length(lx))
+      for (m in 1:length(lx)){
+        cols2 <- names(lx[[m]])[!(names(lx[[m]]) %in% c("strategy",grp1[m]))]
+        lx_ss[[m]] <- calc_summary_stats(lx[[m]],cols2,c("strategy",grp1[m]))
+      }
+      lx_ss[[5]][,special.population := spec_pops[special.population+1]]
+      
+      # Plot results
+      fdir <- paste0("../Figures/",dir1,t_sim[j],"days/",v_e_nms[i],"/",n_v[l],"doses/")
+      # plot_predictions_all_strtgs2(res_ss[res_ss$strategy %in% c(0,strategies1),],lx_ss,paste0(fdir,"Strategies1to",length(lbls)-1,by,"/"),vrble,lbls,"YlGnBu",strategies1,grp1,lbls1)
+      
+      # Plot optimal allocation
+      # plot_optimal_allocation(x,n_v[l],paste0(fdir,"OptimalAllocation",by,"/"),spec_pops)
+      plot_optimal_allocation(x[!(x$special.population %in% c(1,3,8)),],n_v[l],paste0(fdir,"OptimalAllocation",by,"/"),spec_pops)
     }
-    lx_ss[[5]][,special.population := spec_pops[special.population+1]]
+  }  
+}
 
-    # Plot results
-    fdir <- paste0("../Figures/",dir1,t_sim[j],"days/",n_v[k],"doses/")
-    plot_predictions_all_strtgs2(res_ss[res_ss$strategy %in% 0:5,],lx_ss,paste0(fdir,"Strategies1to",length(lbls)-1,by,"/"),lbls,"YlGnBu",grp1,lbls1)
+# Plot results of vaccine sensitivity analysis
+lbls2 <- c("90%","60%","60% age-dep")
+for (j in 1:length(t_sim)){
+  for (l in 1:length(n_v)){
+    # Read in results for different vaccine efficacies
+    lresSA <- vector("list",length(v_e_nms))
+    for (i in 1:length(v_e_nms)){
+      lresSA[[i]] <- read.csv(paste0("../Data/PredictionsDeathIFRModel1/pred_cases_deaths_DALYs_all_strategies_",n_v[l],"doses_",v_e_nms[i],"_",t_sim[j],"days",by,".csv"),stringsAsFactors = F)
+      lresSA[[i]]$v_e <- v_e_nms[i] 
+    }
+    # Bind results for different efficacies together
+    res <- do.call(rbind,lresSA)
     
-    # Plot optimal allocation
-    plot_optimal_allocation(x,n_v[k],paste0(fdir,"OptimalAllocation",by,"/"),spec_pops) 
+    # Plot results
+    fdir <- paste0("../Figures/",dir1,t_sim[j],"days/vacc_eff_SA/",n_v[l],"doses/")
+    plot_predictions_vacc_eff_SA(res,strategies1,v_e_nms,vrble,fdir)
   }
+}
+
+for (j in 1:length(t_sim)){
+  x1 <- x_other
+  setDT(x1)
+  x1[,`:=`(deaths_averted=(1-v_e[[1]])*lambda_adj*r*(1-r^t_sim[j])/(1-r)*population,infections_averted=(1-v_e[[1]])*lambda_inf*r*(1-r^t_sim[j])/(1-r)*population,cases_averted=(1-v_e[[1]])*lambda_case*r*(1-r^t_sim[j])/(1-r)*population,DALYs_averted=(1-v_e[[1]])*r*(1-r^t_sim[j])/(1-r)*lambda_DALYs*population)]
+  agg_x1 <- x1[,lapply(.SD,sum),.SDcols=c("population","deaths_averted","infections_averted","cases_averted","DALYs_averted"),by=.(age_cat)]
+  agg_x1_long <- melt(agg_x1,id.vars = "age_cat")
+  agg_x1_long[,prop_CA:=value/sum(value),by=.(variable)]
+  agg_x1 <- dcast(agg_x1_long, age_cat ~ variable,value.var = c("value","prop_CA"))
+  names(agg_x1) <- gsub("value_","",names(agg_x1))
+  agg_x1 <- agg_x1[c((nrow(agg_x1)-1):1,nrow(agg_x1)),]
+  write.csv(agg_x1,paste0("../Data/",dir1,"prop_CA_cases_deaths_DALYs_averted_by_age_",t_sim[j],"days.csv"),row.names = F)
 }
 
 # save(v_e,n_v,t_sim,r,dir1,file=paste0(dir1,"sim_pars.RData"))

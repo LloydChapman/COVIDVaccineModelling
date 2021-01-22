@@ -9,6 +9,7 @@ Code/Untitled*
 Code/rough_calcs.R
 Code/*_old.R
 Code/process_cdph_data_with_output.R
+Code/backcalculate_infections.R
 Data/
 Figures/
 IRB/
@@ -16,3 +17,4 @@ Lit/
 Manuscript/
 Pre-analysis plan/
 Presentations/
+.Rproj.user

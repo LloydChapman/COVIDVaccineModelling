@@ -1,9 +1,7 @@
 rm(list=ls())
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data"
-
 # Read in CDC seroprevalence survey data
-seroprev <- read.csv("CDCSeroprevalenceData/Nationwide_Commercial_Laboratory_Seroprevalence_Survey.csv",stringsAsFactors = F)
+seroprev <- read.csv("../Data/CDCSeroprevalenceData/Nationwide_Commercial_Laboratory_Seroprevalence_Survey_2021-01-04.csv",stringsAsFactors = F)
 
 # Subset to California
 seroprev <- seroprev[seroprev$Site=="CA",] #grep("Rate",names(seroprev))
@@ -37,4 +35,4 @@ seroprev_long$Upper.CI <- seroprev_long$Upper.CI/100
 seroprev_long <- seroprev_long[order(seroprev_long$Round,seroprev_long$group),]
 
 # Save
-write.csv(seroprev_long,"CA_seroprevalence.csv",row.names = F)
+write.csv(seroprev_long,"../Data/CA_seroprevalence1.csv",row.names = F)

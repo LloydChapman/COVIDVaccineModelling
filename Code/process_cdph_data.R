@@ -3,9 +3,10 @@ rm(list=ls())
 library(lubridate)
 
 source("/mnt/nlo_shared/code/processing_functions.R")
-# source("~/Dropbox/COVIDVaccineModelling/Code/processing_functions.R")
+# source("processing_functions.R")
 
-setwd("/mnt/nlo/cdph_lane6_dua_tables_20201019/")
+# setwd("/mnt/nlo/cdph_lane6_dua_tables_20201019/")
+setwd("/mnt/nlo/cdph_lane6_dua_tables_20210102/")
 
 #################
 ### Case data ###
@@ -78,6 +79,18 @@ cases$n_deaths[!is.na(cases$date_of_death)] <- 1
 # # Save
 # write.csv(cases,"/mnt/nlo_shared/data/cases.csv",row.names = F) 
 
+# ##################
+# ### Death data ###
+# ##################
+# 
+# deaths <- read.csv("tbl5_covid_deaths.csv",stringsAsFactors=F)
+# deaths$dod <- as.Date(deaths$dod)
+# names(deaths)[names(deaths)=="dod"] <- "date_of_death"
+# 
+# deaths$n_deaths <- 1
+# agg_deaths <- aggregate(n_deaths ~ date_of_death + county_res + age_cat + sex + race_ethnicity)
+# agg_deaths <- agg_deaths[do.call(order,agg_deaths),]
+
 ####################
 ### Testing data ###
 ####################
@@ -94,7 +107,7 @@ print(summary(tests1))
 
 tests$n_tests <- 1
 agg_tests_age <- aggregate(n_tests ~ result_date + age_cat + result,tests,sum)
-write.csv(agg_tests_age,"/mnt/nlo_shared/data/agg_tests_age.csv",row.names = F)
+write.csv(agg_tests_age,"/mnt/nlo_shared/data/agg_tests_age1.csv",row.names = F)
 
 ###########################
 ### Aggregate case data ###
@@ -106,7 +119,7 @@ agg_cases <- agg_cases[do.call(order,agg_cases),]
 print(head(agg_cases))
 
 agg_cases_age <- aggregate(cbind(n,n_deaths) ~ first_report_date + age_cat,cases,sum)
-write.csv(agg_cases_age,"/mnt/nlo_shared/data/agg_cases_age.csv",row.names = F)
+write.csv(agg_cases_age,"/mnt/nlo_shared/data/agg_cases_age1.csv",row.names = F)
 
 # # Create exposure time variable
 # # Find earliest event date
@@ -150,8 +163,8 @@ agg_deaths <- aggregate(n_deaths ~ date_of_death + county_res + age_cat + sex + 
 agg_deaths <- agg_deaths[do.call(order,agg_deaths),]
 print(head(agg_deaths))
 
-# # Save
-# write.csv(agg_deaths,"/mnt/nlo_shared/data/agg_deaths1.csv",row.names = F)
+# Save
+write.csv(agg_deaths,"/mnt/nlo_shared/data/agg_deaths2.csv",row.names = F)
 
 ####################################
 ### Calculate analysis variables ###
@@ -161,26 +174,26 @@ print(head(agg_deaths))
 agg_cases_dummy <- agg_cases
 set.seed(123)
 agg_cases_dummy$n <- rpois(nrow(agg_cases),mean(agg_cases$n))
-write.csv(agg_cases_dummy,"/mnt/nlo_shared/data/agg_cases_dummy1.csv",row.names=F)
+write.csv(agg_cases_dummy,"/mnt/nlo_shared/data/agg_cases_dummy2.csv",row.names=F)
 
 agg_deaths_dummy <- agg_deaths
 agg_deaths_dummy$n_deaths <- rpois(nrow(agg_deaths),mean(agg_deaths$n_deaths))
-write.csv(agg_deaths_dummy,"/mnt/nlo_shared/data/agg_deaths_dummy1.csv",row.names=F)
+write.csv(agg_deaths_dummy,"/mnt/nlo_shared/data/agg_deaths_dummy2.csv",row.names=F)
 
 # # Read in dummy data
 # setwd("~/Dropbox/COVIDVaccineModelling/Code")
 # agg_cases <- read.csv("../Data/agg_cases_dummy.csv")
 # agg_cases$first_report_date <- as.Date(agg_cases$first_report_date)                                            
 
-# Subset and process the data for the last 1, 3, 6 and 9 months 
-start_dates <- max(agg_cases$first_report_date) %m-% months(c(1,3,6,9))
-agg_pop <- read.csv("/mnt/nlo_shared/data/agg_pop1.csv",stringsAsFactors=F)
+# Subset and process the data for the last 3, 6, 9 and 12 months 
+start_dates <- max(agg_cases$first_report_date) %m-% months(c(3,6,9,12))
+agg_pop <- read.csv("/mnt/nlo_shared/data/agg_pop2.csv",stringsAsFactors=F)
 for (i in 1:length(start_dates)){
   y <- calc_analysis_vars(agg_cases,start_dates[i],agg_pop)
   # Save
-  write.csv(y,paste0("/mnt/nlo_shared/data/processed_data_",start_dates[i],"_1.csv"),row.names = F)
-  # write.csv(y,paste0("../Data/processed_data_",start_date,"_1.csv"),row.names = F)
+  write.csv(y,paste0("/mnt/nlo_shared/data/processed_data_",start_dates[i],"_2.csv"),row.names = F)
+  # write.csv(y,paste0("../Data/processed_data_",start_date,"_2.csv"),row.names = F)
   y_deaths <- calc_death_analysis_vars(agg_deaths,start_dates[i],agg_pop)
   # Save
-  write.csv(y_deaths,paste0("/mnt/nlo_shared/data/processed_death_data_",start_dates[i],"_1.csv"),row.names = F)
+  write.csv(y_deaths,paste0("/mnt/nlo_shared/data/processed_death_data_",start_dates[i],"_2.csv"),row.names = F)
 }

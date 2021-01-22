@@ -63,7 +63,7 @@ p_death_given_hosp_by_age_and_sex[,"female"] <- c(0.017,0.017,0.026,0.036,0.062,
 p_death_given_hosp_by_age_and_sex[,"male"] <- c(0.024,0.024,0.036,0.059,0.095,0.143,0.221,0.363,0.538) # value for 10-19 age group used for 0-9 age group
 
 # Hazard ratios for co-morbidities in comorbs
-# HR_ashtma <- (2454403 * 0.99  + 291670 * 1.13)/(2454403 + 291670) # population-weighted HR for asthma from Williamson Nature 2020, almost exactly 1 so just use 1
+# HR_asthma <- (2454403 * 0.99  + 291670 * 1.13)/(2454403 + 291670) # population-weighted HR for asthma from Williamson Nature 2020, almost exactly 1 so just use 1
 HR_DM <- (1038082 * 1.31 + 486491 * 1.95)/(1038082 + 486491) # population-weighted HR for diabetes from Williamson Nature 2020
 HR <- c(1,HR_DM,1,1.16,1.77,1,1.33) # Docherty BMJ 2020 (some significant RFs from paper not included here, HRs for asthma and smoking taken as 1 as they were not significant in multivariable model, HR for heart failure taken from Petrilli BMJ 2020)
 names(HR) <- comorbs

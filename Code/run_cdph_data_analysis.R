@@ -3,7 +3,7 @@ source("/mnt/nlo_shared/code/analysis_functions.R")
 # source("~/Dropbox/COVIDVaccineModelling/Code/analysis_functions.R")
 
 dir <- "/mnt/nlo_shared/data/"
-fnms <- list.files(dir,pattern = "processed_data_.*_1")
+fnms <- list.files(dir,pattern = "processed_data_.*_2")
 # dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
 # fnms <- list.files(dir,pattern = "processed_dummy_data_")
 
