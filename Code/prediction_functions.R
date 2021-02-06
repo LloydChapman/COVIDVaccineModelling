@@ -269,8 +269,8 @@ add_risk_ests <- function(fnm,RR,df,p_death,lt_long,seroprev){
   # print(tend-tstart)
 }
 
-add_risk_ests_deaths <- function(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,seroprev,IFR_long,IFR_ratio){
-  # Add 1 for RR for non-special population to start of RR vector
+add_risk_ests_deaths <- function(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,seroprev,IFR_long,IFR_ratio,agg_deaths_age,frlty_idx,RR_death_essential){#
+  # Add 1 for RR of infection for non-special population to start of RR vector
   RR <- c(non_spec_pop=1,RR)
   RR_LB <- c(non_spec_pop=1,RR_LB)
   RR_UB <- c(non_spec_pop=1,RR_UB)
@@ -293,6 +293,10 @@ add_risk_ests_deaths <- function(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,sero
   # Merge into synthetic population data table
   demogrphcs <- c("county_res","age_cat","sex","race_ethnicity")
   df <- merge(df,x[,c(demogrphcs,"time_death","log_lambda","se_log_lambda","log_lambda_LB","log_lambda_UB"),with=F],by=demogrphcs)
+  # x1 <- x[,c(demogrphcs,"time_death","log_lambda","se_log_lambda","log_lambda_LB","log_lambda_UB"),with=F]
+  # setkeyv(x1,demogrphcs)
+  # setkeyv(df,demogrphcs)
+  # df[x1,(names(x1)):=mget(paste0("i.",names(x1)))]
   
   # Calculate RR for non-special population
   comorbs <- names(HR)
@@ -306,9 +310,10 @@ add_risk_ests_deaths <- function(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,sero
   # Multiply HRs together for each comorbidity combination
   y[,HR := apply(HR_mat * y[,comorbs,with=F],1,function(x){prod(x[x!=0])})] # Works as prod(numeric(0))=1, so gives right answer when all comorbidity statuses are 0
   # Multiply RR by overall HR for comorbidity combination
-  y[,`:=`(RR = RR[special.population+1] * HR,RR_LB = RR_LB[special.population+1] * HR,RR_UB = RR_UB[special.population+1] * HR)]
-  # Calculate standard error for relative risk
-  y[,se_RR := pmin(RR-RR_LB,RR_UB-RR)/z_star]
+  # y[,`:=`(RR = RR[special.population+1] * HR,RR_LB = RR_LB[special.population+1] * HR,RR_UB = RR_UB[special.population+1] * HR)]
+  y[,`:=`(RR_inf = RR[special.population+1],RR_inf_LB = RR_LB[special.population+1],RR_inf_UB = RR_UB[special.population+1])]
+  # # Calculate standard error for relative risk
+  # y[,se_RR := pmin(RR-RR_LB,RR_UB-RR)/z_star]
   
   # Aggregate synthetic population data table by demographics, special populations, and comorbidities
   agg_df <- df[,.(population=.N),by=c(demogrphcs,spec_pop_comorbs)]
@@ -319,37 +324,93 @@ add_risk_ests_deaths <- function(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,sero
   # Merge with aggregated synthetic population data table
   agg_df <- merge(z,agg_df,all.x=T)
   agg_df[is.na(population),population:=0]
+  
+  # Merge with IFR
+  agg_df[,sex:=ifelse(sex==1,"male","female")]
+  agg_df <- merge(agg_df,IFR_long[,.(age_cat,sex,median_perc,CI_95_LB,CI_95_UB)],by=c("age_cat","sex"))
+
+  # Calculate average IFR for each special population
+  agg_df[,IFR_spec_pop_mean:=sum(population*median_perc)/(100*sum(population))*IFR_ratio,by=.(special.population)]
+  # agg_df[special.population %in% c(3,8),IFR_spec_pop_mean:=frlty_idx*IFR_spec_pop_mean]
+  agg_df[,RR_death_given_inf:=IFR_spec_pop_mean/agg_df[special.population==0,IFR_spec_pop_mean][1]]
+  
   # Add group index for special population and comorbidity combinations
   agg_df[,grp:=.GRP,by=c(demogrphcs,spec_pop_comorbs)]
   # Merge with RR data table
   agg_df <- merge(agg_df,y,by=spec_pop_comorbs,all.x=T)
-  # Adjust RRs so that overall death rate remains the same
-  agg_df <- merge(agg_df,agg_df[,.(RR0 = sum(population)/sum(population*RR)),by=demogrphcs],by=demogrphcs)
-  agg_df <- agg_df[,`:=`(RR = RR*RR0,RR_LB = RR_LB*RR0,RR_UB = RR_UB*RR0,se_RR = se_RR*RR0)]
   
-  # Merge with synthetic population data table by demographic, special population and comorbidity combination
-  df <- merge(df,agg_df,by=c(demogrphcs,spec_pop_comorbs))
+  # Merge with RR of death for LTCF residents
+  agg_df <- merge(agg_df,agg_deaths_age[,.(age_cat,RR_LTCF,RR_LTCF_LB,RR_LTCF_UB)],by="age_cat",all.x=T)
+  
+  # Calculate RR of death
+  agg_df[,`:=`(RR=RR_inf*RR_death_given_inf,RR_LB=RR_inf_LB*RR_death_given_inf,RR_UB=RR_inf_UB*RR_death_given_inf)]
+  # Overwrite RR of death for LTCF residents
+  agg_df[special.population %in% c(3,8),`:=`(RR=RR_LTCF,RR_LB=RR_LTCF_LB,RR_UB=RR_LTCF_UB)]
+  # Overwrite RRs of death for essential workers
+  agg_df[special.population==6,`:=`(RR=RR_death_essential[special.population==6,RR],RR_LB=RR_death_essential[special.population==6,RR_LB],RR_UB=RR_death_essential[special.population==6,RR_UB])]
+  agg_df[special.population==7,`:=`(RR=RR_death_essential[special.population==7,RR],RR_LB=RR_death_essential[special.population==7,RR_LB],RR_UB=RR_death_essential[special.population==7,RR_UB])]
+  # Multiply by HR for comorbidities
+  agg_df[,`:=`(RR=RR*HR,RR_LB=RR_LB*HR,RR_UB=RR_UB*HR)]
+  agg_df <- agg_df[,se_RR := pmin(RR-RR_LB,RR_UB-RR)/z_star]
+  
+  # Adjust RRs so that overall death rate remains the same
+  # agg_df <- merge(agg_df,agg_df[,.(RR0 = sum(population)/sum(population*RR_inf)),by=demogrphcs],by=demogrphcs)
+  agg_df[,RR0 := sum(population)/sum(population*RR),by=demogrphcs]
+  agg_df <- agg_df[,`:=`(RR = RR*RR0,RR_LB = RR_LB*RR0,RR_UB = RR_UB*RR0,se_RR = se_RR*RR0)]
+  x[,sex:=as.character(sex)][sex=="1",sex:="male"][sex=="0",sex:="female"]
+  agg_df <- merge(agg_df,x[,c(demogrphcs,"cum_deaths"),with=F],by=demogrphcs,all.x=T)
+  setnames(agg_df,"cum_deaths","cum_deaths_demogrphc")
+  # Estimate cumulative deaths in each demographic-special-population-comorbidity group
+  agg_df[,cum_deaths:=population*RR/sum(population*RR)*cum_deaths_demogrphc,by=demogrphcs]
+  agg_df[is.na(cum_deaths),cum_deaths:=0]
+
+  # Estimate past infections in each demographic-special-population-comorbidity group from deaths and IFR
+  agg_df[,cum_inf:=cum_deaths/(median_perc/100*IFR_ratio)]
+  # # Adjust estimate of cumulative infections in LTCFs by frailty index
+  agg_df[special.population %in% c(3,8),cum_inf:=cum_inf/frlty_idx]
+  # Calculate probability of past infection by age, sex and special population
+  agg_df[,p_past_inf:=sum(cum_inf)/sum(population),by=.(age_cat,sex,special.population)]
+  agg_df[p_past_inf>1,p_past_inf:=1]
   
   # Add risk group variable for demographic and special population combination
-  df[,risk_grp:=.GRP,by=c(demogrphcs,"special.population")]
-  
+  agg_df[,risk_grp:=.GRP,by=c(demogrphcs,"special.population")]
+
+  # Merge with synthetic population data table by demographic, special population and comorbidity combination
+  df[,sex:=as.character(sex)][sex=="1",sex:="male"][sex=="0",sex:="female"]
+  agg_df[,c("IFR_spec_pop_mean","RR_death_given_inf","RR_inf","RR_inf_LB","RR_inf_UB","RR_LTCF","RR_LTCF_LB","RR_LTCF_UB","cum_deaths","cum_deaths_demogrphc","cum_inf"):=NULL] # remove columns
+  df <- merge(df,agg_df,by=c(demogrphcs,spec_pop_comorbs),all.x=T)
+  # setkeyv(agg_df,c(demogrphcs,spec_pop_comorbs))
+  # setkeyv(df,c(demogrphcs,spec_pop_comorbs))
+  # df[agg_df,(names(agg_df)):=mget(paste0("i.",names(agg_df)))]
+    
   # Merge with life table data frame
-  df[,sex:=ifelse(sex==1,"male","female")]
   df <- merge(df,lt_long,by=c("age","sex","race_ethnicity"),all.x=T)
+  # setkeyv(lt_long,c("age","sex","race_ethnicity"))
+  # setkeyv(df,c("age","sex","race_ethnicity"))
+  # df[lt_long,(names(lt_long)):=mget(paste0("i.",names(lt_long)))]
   
   # Merge with seroprevalence data frame
   age_cat_sero_lbs <- c(as.numeric(gsub("-.*|\\+|>","",seroprev[,age_cat_sero])),max(df[,age])+1)
   df[,age_cat_sero:=cut(age,age_cat_sero_lbs,right = F,labels = seroprev[,age_cat_sero])]
   df <- merge(df,seroprev,by="age_cat_sero",all.x=T)
+  # setkey(seroprev,age_cat_sero)
+  # setkey(df,age_cat_sero)
+  # df[seroprev,(names(seroprev)):=mget(paste0("i.",names(seroprev)))]
   
-  # Merge with probability of past infection based on estimated infections from deaths and IFR
-  x[,sex:=ifelse(sex==1,"male","female")]
-  x <- merge(x,IFR_long[,.(age_cat,sex,median_perc,CI_95_LB,CI_95_UB)],by=c("age_cat","sex"))
-  x[,IFR:=median_perc/100*IFR_ratio]
-  x[,cum_inf:=cum_deaths/IFR]
-  agg_x <- x[,.(IFR=mean(IFR),cum_inf=sum(cum_inf),population=sum(population,na.rm=T)),by=.(age_cat,sex)]
-  agg_x[,p_past_inf:=cum_inf/population]
-  df <- merge(df,agg_x[,.(age_cat,sex,IFR,p_past_inf)],by=c("age_cat","sex"))
+  # # Merge with probability of past infection based on estimated infections from deaths and IFR
+  # x[,sex:=ifelse(sex==1,"male","female")]
+  # df <- merge(df,x[,c(demogrphcs,"cum_deaths"),with=F],by=demogrphcs,all.x=T)
+  # setnames(df,"cum_deaths","cum_deaths_demogrphc")
+  # df[,cum_deaths:=population*RR/sum(population*RR)*cum_deaths_demogrphc,by=demogrphcs]
+  # df[,cum_inf:=cum_deaths/(median_perc/100*IFR_ratio)]
+  # df[special.population %in% c(3,8),cum_inf:=cum_inf/frlty_idx]
+  # df[,p_past_inf:=sum(cum_inf)/sum(.N),by=.(age_cat,sex,special.population)]
+  # # x <- merge(x,IFR_long[,.(age_cat,sex,median_perc,CI_95_LB,CI_95_UB)],by=c("age_cat","sex"))
+  # # x[,IFR:=median_perc/100*IFR_ratio]
+  # # x[,cum_inf:=cum_deaths/IFR]
+  # # agg_x <- x[,.(IFR=mean(IFR),cum_inf=sum(cum_inf),population=sum(population,na.rm=T)),by=.(age_cat,sex)]
+  # # agg_x[,p_past_inf:=cum_inf/population]
+  # # df <- merge(df,agg_x[,.(age_cat,sex,IFR,p_past_inf)],by=c("age_cat","sex"))
   return(df)
 }
 
@@ -378,6 +439,12 @@ calc_cases_from_infections2 <- function(x,p_clin_dt){
   x <- merge(x,p_clin_dt,by="age_cat",all.x=T)
   x[,`:=`(case=infection*p_clin,case_v=infection_v*p_clin)]
 }
+
+# backcalculate_infections3 <- function(x,IFR_long,IFR_ratio,frlty_idx){
+#   x <- merge(x,IFR_long[,.(age_cat,sex,median_perc,CI_95_LB,CI_95_UB)],by=c("age_cat","sex"),all.x = T)
+#   x[,`:=`(infection=death/(median_perc/100*IFR_ratio),infection_v=death_v/(median_perc/100*IFR_ratio))]
+#   x[special.population %in% c(3,8),`:=`(infection=infection/frlty_idx,infection_v=infection_v/frlty_idx)]
+# }
 
 calc_DALYs <- function(death,LE,case,p_mi,d,w){
   YLL <- death * LE
@@ -560,6 +627,46 @@ simulate_deaths <- function(df,v_e,t_sim,r,deaths_ratio,n_sim,d,w){
   return(out)
 }
 
+simulate_deaths2 <- function(df,v_e,t_sim,r,deaths_ratio,d,w){
+  # Total number of risk groups
+  n_grp <- nrow(df)
+  
+  pop <- df$population
+  p_past_inf <- df$p_past_inf
+  log_lambda <- rtruncnorm(n_grp,a = df$log_lambda_LB,b = df$log_lambda_UB,mean = df$log_lambda,sd = df$se_log_lambda)
+  lambda <- exp(log_lambda)
+  RR <- rtruncnorm(n_grp,a = df$RR_LB - 1e-15,b = df$RR_UB + 1e-15,mean = df$RR,sd = df$se_RR)
+  if (r!=1){
+    p_death <- 1 - exp(-lambda*r*(1-r^t_sim)/(1-r) * RR * deaths_ratio)
+    p_death_v <- (1 - exp(-(1-v_e)*lambda*r*(1-r^t_sim)/(1-r) * RR * deaths_ratio))    
+  } else {
+    p_death <- 1 - exp(-lambda*t_sim * RR * deaths_ratio)
+    p_death_v <- (1 - exp(-(1-v_e)*lambda*t_sim * RR * deaths_ratio))    
+  }
+  
+  ## No vaccination
+  # Simulate past infections
+  past_inf <- rbinom(n_grp,pop,p_past_inf)
+  
+  # Simulate new deaths
+  death <- rbinom(n_grp,pop-past_inf,p_death)
+  
+  # Calculate DALYs from deaths
+  DALYs <- calc_DALYs_from_deaths(death,df$life_expectancy,d,w)
+  
+  ## Vaccination
+  # Simulate new deaths
+  death_v <- rbinom(n_grp,pop-past_inf,p_death_v)
+  
+  # Calculate DALYs from deaths
+  DALYs_v <- calc_DALYs_from_deaths(death_v,df$life_expectancy,d,w)
+  
+  # Bind into output array
+  out <- cbind(past_inf,death,DALYs,death_v,DALYs_v)
+  
+  return(out)
+}
+
 aggregate_predictions <- function(out,df,n_sim){
   # Bind column with risk group ID
   out <- abind(risk_grp=array(rep(df$risk_grp,n_sim),dim=c(nrow(out),1,n_sim)),out,along=2)
@@ -585,6 +692,18 @@ aggregate_predictions_deaths <- function(out,grp,n_sim){
   # agg_out <- out_dt[,.(past_inf=sum(past_inf),death=sum(death),DALYs=sum(DALYs),death_v=sum(death_v),DALYs_v=sum(DALYs_v)),by=.(sim,grp)]
   agg_out <- out_dt[,.(past_inf=sum(past_inf),death=sum(death),DALYs=sum(DALYs),death_v=sum(death_v),DALYs_v=sum(DALYs_v)),by=.(grp)]
   
+  return(agg_out)
+}
+
+aggregate_predictions_by_grp <- function(out,cols,grp1){
+  out[,lapply(.SD, sum), .SDcols = cols, by = grp1]
+}
+
+aggregate_predictions_vldtn <- function(out,cols,grp){
+  agg_out <- vector("list",length(grp))
+  for (i in 1:length(grp)){
+    agg_out[[i]] <- aggregate_predictions_by_grp(out,cols,grp[i])
+  }
   return(agg_out)
 }
 
@@ -670,6 +789,28 @@ process_predictions_deaths <- function(out,grp,n_sim,risk_grp_dt,IFR_long,IFR_ra
   # 
   # return(res)
   return(agg_out)
+}
+
+process_predictions_deaths2 <- function(out,grp,agg_df,IFR_ratio,d,w,frlty_idx){
+  out <- cbind(grp,out)
+  
+  # Merge county, age, sex and race/ethnicity information from synthetic population data frame and add risk group populations
+  out <- merge(agg_df[,.(county_res,age_cat,sex,race_ethnicity,special.population,asthma,diabetes,heart.disease,heart.failure,hypertension,obesity,smoker,population,median_perc,p_clin,grp,risk_grp)],out,by="grp")
+  
+  # Backcalculate infections in each risk group using O'Driscoll IFR
+  out[,`:=`(infection=death/(median_perc/100*IFR_ratio),infection_v=death_v/(median_perc/100*IFR_ratio))]
+  out[special.population %in% c(3,8),`:=`(infection=infection/frlty_idx,infection_v=infection_v/frlty_idx)]
+  
+  # Calculate clinical cases from infections using Davies age-dependent clinical fraction
+  out[,`:=`(case=infection*p_clin,case_v=infection_v*p_clin)]
+  
+  # Calculate and add DALYs from infections and cases
+  out[,`:=`(DALYs = DALYs + calc_DALYs_from_infections_and_cases(infection,case,d,w),DALYs_v = DALYs_v + calc_DALYs_from_infections_and_cases(infection_v,case_v,d,w))]
+  
+  # Calculate infections, cases, deaths and DALYs averted
+  out <- calc_infections_cases_deaths_DALYs_averted(out)
+  
+  return(out)
 }
 
 calc_cases_hosps_deaths_averted <- function(x){
@@ -801,7 +942,7 @@ order_by_risk_by_grp <- function(x,grp1,by=""){
     agg_x <- x[,.(lambda_DALYs=mean(lambda_DALYs)),by=grp1]
     agg_x[,rank := order(order(-lambda_DALYs))]
     x <- merge(x,agg_x[,!"lambda_DALYs"],by=grp1,all.x=T)
-    ord <- x[order(rank),grp]
+    # ord <- x[order(rank),grp]
     # ord <- x[order(rank,-lambda_adj),grp]
     ord <- x[order(rank,sample.int(nrow(x))),grp]
   }
@@ -1039,19 +1180,19 @@ plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","death","DALYs"),xlbl=NULL
   } else {
     x_long <- melt(x,id.vars = c("strategy",grp))
     # Remove duplicated "no vaccination rows"
-    x_long <- x_long[!(duplicated(x_long[,-c("strategy","value")]) & (variable %in% paste0(rep(vrble,each=3),c("","_q_90_LB","_q_90_UB")))),]
+    x_long <- x_long[!(duplicated(x_long[,-c("strategy","value")]) & (variable %in% paste0(rep(vrble,each=3),c("","_q_95_LB","_q_95_UB")))),]
     # Change strategy number for no vaccination to 0
-    x_long[variable %in% paste0(rep(vrble,each=3),c("","_q_90_LB","_q_90_UB")),strategy:=0]
+    x_long[variable %in% paste0(rep(vrble,each=3),c("","_q_95_LB","_q_95_UB")),strategy:=0]
   }
   for (i in 1:length(vrble)){
     last_char <- substr(vrble[i],nchar(vrble[i]),nchar(vrble[i]))
     ylbl <- ifelse(last_char=="s",vrble[i],paste0(vrble[i],"s"))
-    q_long <- x_long[variable %in% paste0(rep(c(vrble[i],vrble1[i]),each=3),c("","_q_90_LB","_q_90_UB")),]
+    q_long <- x_long[variable %in% paste0(rep(c(vrble[i],vrble1[i]),each=3),c("","_q_95_LB","_q_95_UB")),]
     q_long[variable==vrble1[i],variable:=vrble[i]]
-    q_long[variable==paste0(vrble1[i],"_q_90_LB"),variable:=paste0(vrble[i],"_q_90_LB")]
-    q_long[variable==paste0(vrble1[i],"_q_90_UB"),variable:=paste0(vrble[i],"_q_90_UB")]
+    q_long[variable==paste0(vrble1[i],"_q_95_LB"),variable:=paste0(vrble[i],"_q_95_LB")]
+    q_long[variable==paste0(vrble1[i],"_q_95_UB"),variable:=paste0(vrble[i],"_q_95_UB")]
     q <- dcast(q_long,... ~ variable,value.var = "value")
-    p <- ggplot(q,aes(x=as.factor(q[[grp]]),y=q[[vrble[i]]],fill=as.factor(strategy))) + geom_bar(position="dodge",stat="identity") + ylab(ylbl) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_90_LB")]],ymax=q[[paste0(vrble[i],"_q_90_UB")]]),width=0.3,position=position_dodge(0.9))
+    p <- ggplot(q,aes(x=as.factor(q[[grp]]),y=q[[vrble[i]]],fill=as.factor(strategy))) + geom_bar(position="dodge",stat="identity") + ylab(ylbl) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_95_LB")]],ymax=q[[paste0(vrble[i],"_q_95_UB")]]),width=0.3,position=position_dodge(0.9))
     if (is.null(xlbl)){
       p <- p + xlab(grp)
     } else {
@@ -1116,7 +1257,7 @@ plot_predictions_all_strtgs2 <- function(res_ss,lx_ss,fdir,vrble,lbls,plt,strate
   }
 }
 
-plot_predictions_vacc_eff_SA <- function(res,strategies1,v_e_nms,vrble,fdir){
+plot_predictions_vacc_eff_SA <- function(res,strategies1,v_e_nms,vrble,fdir,lbls,lbls2){
   dir.create(fdir,recursive = T)
   setDT(res)
   res_long <- melt(res[strategy %in% c(0,strategies1),],id.vars = c("strategy","v_e"))
@@ -1125,9 +1266,9 @@ plot_predictions_vacc_eff_SA <- function(res,strategies1,v_e_nms,vrble,fdir){
   for (i in 1:length(vrble)){
     last_char <- substr(vrble[i],nchar(vrble[i]),nchar(vrble[i]))
     vrble[i] <- ifelse(last_char=="s",vrble[i],paste0(vrble[i],"s"))
-    q_long <- res_long[variable %in% paste0(rep(vrble[i],each=3),c("","_q_90_LB","_q_90_UB")),]
+    q_long <- res_long[variable %in% paste0(rep(vrble[i],each=3),c("","_q_95_LB","_q_95_UB")),]
     q <- dcast(q_long,... ~ variable,value.var = "value")
-    p <- ggplot(q,aes(x=as.factor(strategy),y=q[[vrble[i]]],fill=as.factor(v_e))) + geom_bar(position="dodge",stat="identity") + xlab("Strategy") + ylab(vrble[i]) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_90_LB")]],ymax=q[[paste0(vrble[i],"_q_90_UB")]]),width=0.3,position=position_dodge(0.9)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(res_long[,strategy]),labels = lbls) + scale_fill_brewer(name = "Efficacy",labels = lbls2,palette = "YlOrRd")
+    p <- ggplot(q,aes(x=as.factor(strategy),y=q[[vrble[i]]],fill=as.factor(v_e))) + geom_bar(position="dodge",stat="identity") + xlab("Strategy") + ylab(vrble[i]) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_95_LB")]],ymax=q[[paste0(vrble[i],"_q_95_UB")]]),width=0.3,position=position_dodge(0.9)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(res_long[,strategy]),labels = lbls) + scale_fill_brewer(name = "Efficacy",labels = lbls2,palette = "YlOrRd")
     pdf(paste0(fdir,"pred_",vrble[i],"_by_strategy_vacc_eff_SA.pdf"),width = 5.5, height = 4)
     print(p)
     dev.off()
@@ -1350,13 +1491,13 @@ comb <- function(x, ...) {
   lapply(seq_along(x),function(i){c(x[[i]],lapply(list(...),function(y){y[[i]]}))})
 }
 
-order_and_calc_impact <- function(x_HCW_SNF,x_other,strategy,agg_df_other,by,comorbs,n_v,res_nms){
-  # ord <- order_by_risk(agg_df_HCW_SNF,by)
-  # x_HCW_SNF <- x_HCW_SNF[match(ord,x_HCW_SNF$grp),]
-  x_HCW_SNF <- x_HCW_SNF[sample.int(nrow(x_HCW_SNF)),]
+order_and_calc_impact <- function(x_HCW_LTCF,x_other,x_under20,strategy,agg_df_other,by,comorbs,n_v,res_nms){
+  # ord <- order_by_risk(agg_df_HCW_LTCF,by)
+  # x_HCW_LTCF <- x_HCW_LTCF[match(ord,x_HCW_LTCF$grp),]
+  x_HCW_LTCF <- x_HCW_LTCF[sample.int(nrow(x_HCW_LTCF)),]
   if (strategy==1){ # random
     x_other <- x_other[sample.int(nrow(x_other)),]
-    x <- rbind(x_HCW_SNF,x_other)
+    x <- rbind(x_HCW_LTCF,x_other,x_under20)
   } else if (strategy==2){ # special population
     # ord <- order_by_risk_by_grp(agg_df_other,"special.population",by)
     # x_other <- x_other[match(ord,x_other$grp),]
@@ -1367,29 +1508,37 @@ order_and_calc_impact <- function(x_HCW_SNF,x_other,strategy,agg_df_other,by,com
     ord <- order_by_risk_by_grp(agg_df_spec_pop,"special.population",by)
     x_spec_pop <- x_spec_pop[match(ord,x_spec_pop$grp),]
     x_other <- x_other[sample.int(nrow(x_other)),]
-    x <- rbind(x_HCW_SNF,x_spec_pop,x_other)
+    x <- rbind(x_HCW_LTCF,x_spec_pop,x_other,x_under20)
   } else if (strategy==3){ # age
     ord <- order_by_risk_by_grp(agg_df_other,"age_cat",by)
     x_other <- x_other[match(ord,x_other$grp),]
-    x <- rbind(x_HCW_SNF,x_other)
+    x <- rbind(x_HCW_LTCF,x_other,x_under20)
   } else if (strategy==4){ # essential worker
     EW_idx <- (x_other$special.population %in% c(6,7))
     x_EW <- x_other[EW_idx,]
     x_other <- x_other[!EW_idx,]
     x_EW <- x_EW[sample.int(nrow(x_EW)),]
     x_other <- x_other[sample.int(nrow(x_other)),]
-    x <- rbind(x_HCW_SNF,x_EW,x_other) 
+    x <- rbind(x_HCW_LTCF,x_EW,x_other,x_under20) 
   } else if (strategy==5){ # comorbidity
     comorb_idx <- (rowSums2(as.matrix(x_other[,..comorbs]))!=0)
     x_comorb <- x_other[comorb_idx,]
     x_other <- x_other[!comorb_idx,]
     x_comorb <- x_comorb[sample.int(nrow(x_comorb)),]
     x_other <- x_other[sample.int(nrow(x_other)),]
-    x <- rbind(x_HCW_SNF,x_comorb,x_other)
-  } else if (strategy==6){ # optimal
+    x <- rbind(x_HCW_LTCF,x_comorb,x_other,x_under20)
+  } else if (strategy==6){ # age and county
+    ord <- order_by_risk_by_grp(agg_df_other,c("age_cat","county_res"),by)
+    x_other <- x_other[match(ord,x_other$grp),]
+    x <- rbind(x_HCW_LTCF,x_other,x_under20)
+  } else if (strategy==7){ # age and special population
+    ord <- order_by_risk_by_grp(agg_df_other,c("age_cat","special.population"),by)
+    x_other <- x_other[match(ord,x_other$grp),]
+    x <- rbind(x_HCW_LTCF,x_other,x_under20)
+  } else if (strategy==8){ # optimal
     ord <- order_by_risk(agg_df_other,by)
     x_other <- x_other[match(ord,x_other$grp),]
-    x <- rbind(x_HCW_SNF,x_other)
+    x <- rbind(x_HCW_LTCF,x_other,x_under20)
   }
   x$population[is.na(x$population)] <- 0
   x$cum_pop <- cumsum(x$population)
@@ -1404,11 +1553,13 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   res_nms <- c("infections_averted","cases_averted","deaths_averted","DALYs_averted")
   # fdir <- paste0(fdir,n_v,"doses/")
 
-  HCW_SNF_idx <- (x$special.population %in% c(1,3,8))
-  x_HCW_SNF <- x[HCW_SNF_idx,]
-  x_other <- x[!HCW_SNF_idx,]
+  HCW_LTCF_idx <- (x$special.population %in% c(1,3,8))
+  under20_idx <- (x$age_cat %in% c("<10","10-19"))
+  x_HCW_LTCF <- x[HCW_LTCF_idx & !under20_idx,]
+  x_other <- x[!HCW_LTCF_idx & !under20_idx,]
+  x_under20 <- x[under20_idx,] 
   
-  agg_df_HCW_SNF <- agg_df[grp %in% x_HCW_SNF$grp,]
+  agg_df_HCW_LTCF <- agg_df[grp %in% x_HCW_LTCF$grp,]
   agg_df_other <- agg_df[grp %in% x_other$grp,]
 
   # Strategy 0: no vaccination
@@ -1418,19 +1569,19 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   lx <- vector("list",length(strategies))
   lres <- vector("list",length(strategies))
   for (i in 1:length(strategies)){
-    l <- order_and_calc_impact(x_HCW_SNF,x_other,strategies[i],agg_df_other,by,comorbs,n_v,res_nms)
+    l <- order_and_calc_impact(x_HCW_LTCF,x_other,x_under20,strategies[i],agg_df_other,by,comorbs,n_v,res_nms)
     lx[[i]] <- l$x
     lres[[i]] <- l$res
   }
       
   # # Strategy 1: random allocation
   # set.seed(123)
-  # # x1_HCW_SNF <- optimize_allocation(x_HCW_SNF,n_v,by)
-  # ord1 <- order_by_risk(agg_df_HCW_SNF,by)
-  # x1_HCW_SNF <- x_HCW_SNF[match(ord1,x_HCW_SNF$grp),]
+  # # x1_HCW_LTCF <- optimize_allocation(x_HCW_LTCF,n_v,by)
+  # ord1 <- order_by_risk(agg_df_HCW_LTCF,by)
+  # x1_HCW_LTCF <- x_HCW_LTCF[match(ord1,x_HCW_LTCF$grp),]
   # x1_other <- x_other[sample.int(nrow(x_other)),]
   # # x1_other$cum_pop <- 0
-  # x1 <- rbind(x1_HCW_SNF,x1_other)
+  # x1 <- rbind(x1_HCW_LTCF,x1_other)
   # x1$population[is.na(x1$population)] <- 0
   # x1$cum_pop <- cumsum(x1$population)
   # idx <- (x1$cum_pop <= n_v)
@@ -1440,12 +1591,12 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # # plot_predictions1(x1,n_v,fdir=paste0(fdir,"Strategy1_2",by,"/"))
   # 
   # # Strategy 2: special populations
-  # x2_HCW_SNF <- x1_HCW_SNF
-  # # x2_HCW_SNF$rank <- NA
+  # x2_HCW_LTCF <- x1_HCW_LTCF
+  # # x2_HCW_LTCF$rank <- NA
   # # x2_other <- optimize_allocation_by_grp(x_other,n_v,"special.population",by)
   # ord2 <- order_by_risk_by_grp(agg_df_other,"special.population",by)
   # x2_other <- x_other[match(ord2,x_other$grp),]
-  # x2 <- rbind(x2_HCW_SNF,x2_other)
+  # x2 <- rbind(x2_HCW_LTCF,x2_other)
   # x2$population[is.na(x2$population)] <- 0
   # x2$cum_pop <- cumsum(x2$population) # recalculate cumulative population to correct from splitting
   # idx <- (x2$cum_pop <= n_v)
@@ -1455,12 +1606,12 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # # plot_predictions1(x2,n_v,fdir=paste0(fdir,"Strategy2_2",by,"/"))
   # 
   # # Strategy 3: age targeting
-  # x3_HCW_SNF <- x1_HCW_SNF
-  # # x3_HCW_SNF$rank <- NA
+  # x3_HCW_LTCF <- x1_HCW_LTCF
+  # # x3_HCW_LTCF$rank <- NA
   # # x3_other <- optimize_allocation_by_grp(x_other,n_v,"age_cat",by)
   # ord3 <- order_by_risk_by_grp(agg_df_other,"age_cat",by)
   # x3_other <- x_other[match(ord3,x_other$grp),]
-  # x3 <- rbind(x3_HCW_SNF,x3_other)
+  # x3 <- rbind(x3_HCW_LTCF,x3_other)
   # x3$population[is.na(x3$population)] <- 0
   # x3$cum_pop <- cumsum(x3$population) # recalculate cumulative population to correct from splitting
   # idx <- (x3$cum_pop <= n_v)
@@ -1470,7 +1621,7 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # # plot_predictions1(x3,n_v,fdir=paste0(fdir,"Strategy3_2",by,"/"))
   # 
   # # Strategy 4: essential workers
-  # x4_HCW_SNF <- x1_HCW_SNF
+  # x4_HCW_LTCF <- x1_HCW_LTCF
   # # x4_EW <- optimize_allocation(x_other[x_other$special.population %in% c(4,6),],n_v,by)
   # # x4_other <- optimize_allocation(x_other[!(x_other$special.population %in% c(4,6)),],n_v,by)
   # EW_idx <- (x_other$special.population %in% c(4,6))
@@ -1480,7 +1631,7 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # ord4_other <- order_by_risk(agg_df_other[grp %in% x4_other$grp,],by)
   # x4_EW <- x4_EW[match(ord4_EW,x4_EW$grp),]
   # x4_other <- x4_other[match(ord4_other,x4_other$grp),]
-  # x4 <- rbind(x4_HCW_SNF,x4_EW,x4_other)
+  # x4 <- rbind(x4_HCW_LTCF,x4_EW,x4_other)
   # x4$population[is.na(x4$population)] <- 0
   # x4$cum_pop <- cumsum(x4$population) # recalculate cumulative population to correct from splitting
   # idx <- (x4$cum_pop <= n_v)
@@ -1490,7 +1641,7 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # # plot_predictions1(x4,n_v,fdir=paste0(fdir,"Strategy4_2",by,"/"))
   # 
   # # Strategy 5: comorbidity targeting
-  # x5_HCW_SNF <- x1_HCW_SNF
+  # x5_HCW_LTCF <- x1_HCW_LTCF
   # comorb_idx <- (rowSums2(as.matrix(x_other[,..comorbs]))!=0)
   # # x5_comorb <- optimize_allocation(x_other[comorb_idx,],n_v,by)
   # # x5_other <- optimize_allocation(x_other[!comorb_idx,],n_v,by)
@@ -1500,7 +1651,7 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   # ord5_other <- order_by_risk(agg_df_other[grp %in% x5_other$grp],by)
   # x5_comorb <- x5_comorb[match(ord5_comorb,x5_comorb$grp),]
   # x5_other <- x5_other[match(ord5_other,x5_other$grp),]
-  # x5 <- rbind(x5_HCW_SNF,x5_comorb,x5_other)
+  # x5 <- rbind(x5_HCW_LTCF,x5_comorb,x5_other)
   # x5$population[is.na(x5$population)] <- 0
   # x5$cum_pop <- cumsum(x5$population) # recalculate cumulative population to correct from splitting
   # idx <- (x5$cum_pop <= n_v)
@@ -1581,15 +1732,43 @@ run_prioritisation_strategies2 <- function(x,n_v,fdir,agg_df,strategies,by="",co
   return(list(res=res,x_all_county=x_all_county,x_all_age=x_all_age,x_all_sex=x_all_sex,x_all_race_ethnicity=x_all_race_ethnicity,x_all_spec_pop=x_all_spec_pop,x_all_comorb=x_all_comorb))
 }
 
-q_90_LB <- function(x){quantile(x,probs = 0.05)}
+q_95_LB <- function(x){quantile(x,probs = 0.025)}
 
-q_90_UB <- function(x){quantile(x,probs = 0.95)}
+q_95_UB <- function(x){quantile(x,probs = 0.975)}
 
 calc_summary_stats <- function(x,cols,grp1){
   x_mean <- x[, lapply(.SD, mean), .SDcols = cols, by = grp1]
   x_median <- x[, lapply(.SD, median), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "median", sep = "_"))]
-  x_q_90_LB <- x[, lapply(.SD, q_90_LB), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_90_LB", sep = "_"))]
-  x_q_90_UB <- x[, lapply(.SD, q_90_UB), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_90_UB", sep = "_"))]
-  x_ss <- cbind(x_mean,x_median[,!grp1,with=F],x_q_90_LB[,!grp1,with=F],x_q_90_UB[,!grp1,with=F])
+  x_q_95_LB <- x[, lapply(.SD, q_95_LB), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_95_LB", sep = "_"))]
+  x_q_95_UB <- x[, lapply(.SD, q_95_UB), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_95_UB", sep = "_"))]
+  x_ss <- cbind(x_mean,x_median[,!grp1,with=F],x_q_95_LB[,!grp1,with=F],x_q_95_UB[,!grp1,with=F])
   return(x_ss)
+}
+
+calc_summary_stats2 <- function(x,cols,grp1){
+  x_mean <- x[, lapply(.SD, mean), .SDcols = cols, by = grp1]
+  x_median <- x[, lapply(.SD, median), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "median", sep = "_"))]
+  x_q_95_LB <- x[, lapply(.SD, min), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_95_LB", sep = "_"))]
+  x_q_95_UB <- x[, lapply(.SD, max), .SDcols = cols, by = grp1][, setnames(.SD, cols, paste(cols, "q_95_UB", sep = "_"))]
+  x_ss <- cbind(x_mean,x_median[,!grp1,with=F],x_q_95_LB[,!grp1,with=F],x_q_95_UB[,!grp1,with=F])
+  return(x_ss)
+}
+
+calc_outcome_averted <- function(p_past_inf,lambda,r,t_sim,population,v_e){
+  if (r==1){
+    out <- (1-p_past_inf)*(1-exp(-lambda*t_sim))*population
+    out_v <- (1-p_past_inf)*(1-exp(-(1-v_e)*lambda*t_sim))*population   
+  } else {
+    out <- (1-p_past_inf)*(1-exp(-lambda*r*(1-r^t_sim)/(1-r)))*population
+    out_v <- (1-p_past_inf)*(1-exp(-(1-v_e)*lambda*r*(1-r^t_sim)/(1-r)))*population
+  }
+  out_averted <- out - out_v 
+  return(out_averted)
+}
+
+calc_RR_CI <- function(RR,a,b,c,d,alpha = 0.05){
+  z <- qnorm(1-alpha/2)
+  CI_low <- exp(log(RR) - z * sqrt(1/a - 1/(a+b) + 1/c - 1/(c+d)))
+  CI_upp <- exp(log(RR) + z * sqrt(1/a - 1/(a+b) + 1/c - 1/(c+d)))
+  list(CI_low=CI_low,CI_upp=CI_upp)
 }

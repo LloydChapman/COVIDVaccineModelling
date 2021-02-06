@@ -3,7 +3,7 @@ source("/mnt/nlo_shared/code/analysis_functions.R")
 # source("analysis_functions.R")
 
 dir <- "/mnt/nlo_shared/data/"
-fnms <- list.files(dir,pattern = "processed_death_data_.*_2")
+fnms <- list.files(dir,pattern = "processed_death_data_.*_3")
 # dir <- "../Data/"
 # fnms <- list.files(dir,pattern = "processed_dummy_data_")
 

@@ -8,7 +8,7 @@ source("prediction_functions.R")
 
 ## Inputs
 # Read in death regression output
-glm_fit <- readRDS("../Data/death_regression_output_2020-02-05_3.RDS")
+glm_fit <- readRDS("../Data/death_regression_output_2020-02-05_2020-09-30_3.RDS")
 alpha <- 0.05 # significance level for CI around death rate
 
 # Load processed simulated population data frame
@@ -19,7 +19,7 @@ df <- readRDS("../Data/CA_pop1.RDS")
 # df1 <- df
 # df <- df1[df1$county_res=="Alameda",]
 
-# Relative risks of infection for HCWs, prisoners, SNF residents, educators, homeless individuals, frontline and non-frontline essential workers and ALF residents
+# Relative risks for HCWs, prisoners, SNF residents, teachers and homeless individuals
 RR_essential <- 1.7 # relative risk for essential workers from Allen Nature Human Behaviour 2020
 RR_essential_LB <- 1.1
 RR_essential_UB <- 2.5
@@ -105,4 +105,4 @@ df[,LTCF:=NULL]
 
 ## Add risk estimates from regression of CDPH data and hospitalisation and death probabilities to synthetic population data frame
 df <- add_risk_ests_deaths(glm_fit,alpha,df,RR,RR_LB,RR_UB,HR,lt_long,seroprev,IFR_long,IFR_ratio,agg_deaths_age,frlty_idx,RR_death_essential)#
-saveRDS(df,"../Data/CA_pop_with_risk_ests_deaths4.RDS")
+saveRDS(df,"../Data/CA_pop_with_risk_ests_deaths_vldtn2.RDS")

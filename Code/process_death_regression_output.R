@@ -1,7 +1,7 @@
 library(broom)
 
 dir <- "../Data/"
-fnms <- list.files(dir,pattern = "death_regression_output_.*_2.RDS")
+fnms <- list.files(dir,pattern = "death_regression_output_.*_3.RDS")
 
 y <- vector("list",length(fnms))
 for (i in 1:length(fnms)){
@@ -17,6 +17,6 @@ for (i in 1:length(fnms)){
 }
 
 res <- do.call(cbind,y)
-write.csv(res,paste0(dir,"coeffs_death_all_2.csv"),row.names = F)
+write.csv(res,paste0(dir,"coeffs_death_all_3.csv"),row.names = F)
 res1 <- cbind(res$term,res[,names(res)=="HR"])
-write.csv(res1,paste0(dir,"HRs_2.csv"),row.names=F)
+write.csv(res1,paste0(dir,"HRs_3.csv"),row.names=F)
