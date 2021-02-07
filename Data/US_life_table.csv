@@ -1,0 +1,809 @@
+"age","sex","race_ethnicity","life_expectancy"
+0,"male","Other",76.1007537841797
+1,"male","Other",75.5826110839844
+2,"male","Other",74.6143569946289
+3,"male","Other",73.6356658935547
+4,"male","Other",72.6521224975586
+5,"male","Other",71.6635360717773
+6,"male","Other",70.6746063232422
+7,"male","Other",69.6843185424805
+8,"male","Other",68.6929321289062
+9,"male","Other",67.7004547119141
+10,"male","Other",66.7070617675781
+11,"male","Other",65.7132797241211
+12,"male","Other",64.7203140258789
+13,"male","Other",63.7300491333008
+14,"male","Other",62.7447128295898
+15,"male","Other",61.7659683227539
+16,"male","Other",60.7942390441895
+17,"male","Other",59.8294868469238
+18,"male","Other",58.8720855712891
+19,"male","Other",57.922248840332
+20,"male","Other",56.9798126220703
+21,"male","Other",56.0446739196777
+22,"male","Other",55.1161880493164
+23,"male","Other",54.1929168701172
+24,"male","Other",53.2730369567871
+25,"male","Other",52.3551635742188
+26,"male","Other",51.4387435913086
+27,"male","Other",50.523624420166
+28,"male","Other",49.6094779968262
+29,"male","Other",48.6961402893066
+30,"male","Other",47.7835502624512
+31,"male","Other",46.8716011047363
+32,"male","Other",45.9602241516113
+33,"male","Other",45.0494613647461
+34,"male","Other",44.1393699645996
+35,"male","Other",43.2299652099609
+36,"male","Other",42.3215599060059
+37,"male","Other",41.4142456054688
+38,"male","Other",40.5076103210449
+39,"male","Other",39.6011657714844
+40,"male","Other",38.6948356628418
+41,"male","Other",37.7891273498535
+42,"male","Other",36.8850402832031
+43,"male","Other",35.9835815429688
+44,"male","Other",35.0857009887695
+45,"male","Other",34.1920700073242
+46,"male","Other",33.3029441833496
+47,"male","Other",32.4188232421875
+48,"male","Other",31.5407028198242
+49,"male","Other",30.6699333190918
+50,"male","Other",29.8077392578125
+51,"male","Other",28.9543724060059
+52,"male","Other",28.1100368499756
+53,"male","Other",27.2757225036621
+54,"male","Other",26.452220916748
+55,"male","Other",25.6396389007568
+56,"male","Other",24.8373470306396
+57,"male","Other",24.0446186065674
+58,"male","Other",23.26123046875
+59,"male","Other",22.4873828887939
+60,"male","Other",21.7233791351318
+61,"male","Other",20.969633102417
+62,"male","Other",20.2258319854736
+63,"male","Other",19.4909191131592
+64,"male","Other",18.7632961273193
+65,"male","Other",18.0417747497559
+66,"male","Other",17.32594871521
+67,"male","Other",16.6173973083496
+68,"male","Other",15.9159812927246
+69,"male","Other",15.2223024368286
+70,"male","Other",14.5379543304443
+71,"male","Other",13.8603143692017
+72,"male","Other",13.1977014541626
+73,"male","Other",12.544282913208
+74,"male","Other",11.9045171737671
+75,"male","Other",11.2759218215942
+76,"male","Other",10.6626462936401
+77,"male","Other",10.065710067749
+78,"male","Other",9.48768615722656
+79,"male","Other",8.92621040344238
+80,"male","Other",8.38279247283936
+81,"male","Other",7.857346534729
+82,"male","Other",7.34795475006104
+83,"male","Other",6.85905504226685
+84,"male","Other",6.39419269561768
+85,"male","Other",5.94988536834717
+86,"male","Other",5.5249719619751
+87,"male","Other",5.1194429397583
+88,"male","Other",4.74059534072876
+89,"male","Other",4.38794183731079
+90,"male","Other",4.06085538864136
+91,"male","Other",3.7585756778717
+92,"male","Other",3.48022317886353
+93,"male","Other",3.22481226921082
+94,"male","Other",2.99126935005188
+95,"male","Other",2.77845025062561
+96,"male","Other",2.58515787124634
+97,"male","Other",2.41016268730164
+98,"male","Other",2.25221872329712
+99,"male","Other",2.11008262634277
+100,"male","Other",1.98252737522125
+0,"female","Other",81.1047439575195
+1,"female","Other",80.5302200317383
+2,"female","Other",79.5573654174805
+3,"female","Other",78.5737762451172
+4,"female","Other",77.5862121582031
+5,"female","Other",76.5969161987305
+6,"female","Other",75.6064758300781
+7,"female","Other",74.6149597167969
+8,"female","Other",73.6226425170898
+9,"female","Other",72.6297149658203
+10,"female","Other",71.6363754272461
+11,"female","Other",70.6429214477539
+12,"female","Other",69.6497955322266
+13,"female","Other",68.6575927734375
+14,"female","Other",67.6669921875
+15,"female","Other",66.6785202026367
+16,"female","Other",65.6924209594727
+17,"female","Other",64.708740234375
+18,"female","Other",63.7275238037109
+19,"female","Other",62.7487564086914
+20,"female","Other",61.7723579406738
+21,"female","Other",60.7983703613281
+22,"female","Other",59.8267631530762
+23,"female","Other",58.8572196960449
+24,"female","Other",57.889331817627
+25,"female","Other",56.9227905273438
+26,"female","Other",55.9574279785156
+27,"female","Other",54.9932594299316
+28,"female","Other",54.0304336547852
+29,"female","Other",53.0692443847656
+30,"female","Other",52.1099510192871
+31,"female","Other",51.1527442932129
+32,"female","Other",50.1975936889648
+33,"female","Other",49.244327545166
+34,"female","Other",48.2925987243652
+35,"female","Other",47.3421401977539
+36,"female","Other",46.3930931091309
+37,"female","Other",45.4456634521484
+38,"female","Other",44.4997901916504
+39,"female","Other",43.5554809570312
+40,"female","Other",42.612922668457
+41,"female","Other",41.6725654602051
+42,"female","Other",40.7349510192871
+43,"female","Other",39.8004951477051
+44,"female","Other",38.8694038391113
+45,"female","Other",37.9418029785156
+46,"female","Other",37.0177688598633
+47,"female","Other",36.0976448059082
+48,"female","Other",35.182071685791
+49,"female","Other",34.271915435791
+50,"female","Other",33.3679733276367
+51,"female","Other",32.4703483581543
+52,"female","Other",31.5791130065918
+53,"female","Other",30.6948928833008
+54,"female","Other",29.8181686401367
+55,"female","Other",28.9489574432373
+56,"female","Other",28.0870151519775
+57,"female","Other",27.2318019866943
+58,"female","Other",26.3827037811279
+59,"female","Other",25.5392360687256
+60,"female","Other",24.7012538909912
+61,"female","Other",23.8689231872559
+62,"female","Other",23.042459487915
+63,"female","Other",22.222038269043
+64,"female","Other",21.4078388214111
+65,"female","Other",20.6000785827637
+66,"female","Other",19.7988662719727
+67,"female","Other",19.0049896240234
+68,"female","Other",18.2190704345703
+69,"female","Other",17.4428844451904
+70,"female","Other",16.6775131225586
+71,"female","Other",15.921893119812
+72,"female","Other",15.1810894012451
+73,"female","Other",14.4533948898315
+74,"female","Other",13.738317489624
+75,"female","Other",13.0347709655762
+76,"female","Other",12.3472423553467
+77,"female","Other",11.6747245788574
+78,"female","Other",11.0189771652222
+79,"female","Other",10.3825950622559
+80,"female","Other",9.7629919052124
+81,"female","Other",9.16382694244385
+82,"female","Other",8.58300590515137
+83,"female","Other",8.02350807189941
+84,"female","Other",7.49172019958496
+85,"female","Other",6.98246717453003
+86,"female","Other",6.49185800552368
+87,"female","Other",6.02079010009766
+88,"female","Other",5.57760572433472
+89,"female","Other",5.16217136383057
+90,"female","Other",4.77419233322144
+91,"female","Other",4.41321039199829
+92,"female","Other",4.07861566543579
+93,"female","Other",3.76965045928955
+94,"female","Other",3.48542618751526
+95,"female","Other",3.22493600845337
+96,"female","Other",2.98707389831543
+97,"female","Other",2.77065324783325
+98,"female","Other",2.57442879676819
+99,"female","Other",2.39711499214172
+100,"female","Other",2.23740792274475
+0,"male","Hispanic/Latino",79.0965118408203
+1,"male","Hispanic/Latino",78.5243072509766
+2,"male","Hispanic/Latino",77.5490493774414
+3,"male","Hispanic/Latino",76.5648956298828
+4,"male","Hispanic/Latino",75.57958984375
+5,"male","Hispanic/Latino",74.5880966186523
+6,"male","Hispanic/Latino",73.5970993041992
+7,"male","Hispanic/Latino",72.6051940917969
+8,"male","Hispanic/Latino",71.6125259399414
+9,"male","Hispanic/Latino",70.6190414428711
+10,"male","Hispanic/Latino",69.6247634887695
+11,"male","Hispanic/Latino",68.6300582885742
+12,"male","Hispanic/Latino",67.6358642578125
+13,"male","Hispanic/Latino",66.6437606811523
+14,"male","Hispanic/Latino",65.6557083129883
+15,"male","Hispanic/Latino",64.6732406616211
+16,"male","Hispanic/Latino",63.6969108581543
+17,"male","Hispanic/Latino",62.7267112731934
+18,"male","Hispanic/Latino",61.7627143859863
+19,"male","Hispanic/Latino",60.8046417236328
+20,"male","Hispanic/Latino",59.8520736694336
+21,"male","Hispanic/Latino",58.9048233032227
+22,"male","Hispanic/Latino",57.9625511169434
+23,"male","Hispanic/Latino",57.024356842041
+24,"male","Hispanic/Latino",56.0891532897949
+25,"male","Hispanic/Latino",55.1560134887695
+26,"male","Hispanic/Latino",54.2246627807617
+27,"male","Hispanic/Latino",53.2947425842285
+28,"male","Hispanic/Latino",52.3652839660645
+29,"male","Hispanic/Latino",51.4352226257324
+30,"male","Hispanic/Latino",50.5038604736328
+31,"male","Hispanic/Latino",49.5707511901855
+32,"male","Hispanic/Latino",48.6361427307129
+33,"male","Hispanic/Latino",47.7009162902832
+34,"male","Hispanic/Latino",46.7663154602051
+35,"male","Hispanic/Latino",45.8332214355469
+36,"male","Hispanic/Latino",44.9020004272461
+37,"male","Hispanic/Latino",43.9724235534668
+38,"male","Hispanic/Latino",43.0440864562988
+39,"male","Hispanic/Latino",42.116397857666
+40,"male","Hispanic/Latino",41.1890830993652
+41,"male","Hispanic/Latino",40.2623825073242
+42,"male","Hispanic/Latino",39.3369255065918
+43,"male","Hispanic/Latino",38.4133567810059
+44,"male","Hispanic/Latino",37.4924278259277
+45,"male","Hispanic/Latino",36.574821472168
+46,"male","Hispanic/Latino",35.6606140136719
+47,"male","Hispanic/Latino",34.7502517700195
+48,"male","Hispanic/Latino",33.845157623291
+49,"male","Hispanic/Latino",32.947151184082
+50,"male","Hispanic/Latino",32.0576210021973
+51,"male","Hispanic/Latino",31.1773643493652
+52,"male","Hispanic/Latino",30.3062705993652
+53,"male","Hispanic/Latino",29.4436988830566
+54,"male","Hispanic/Latino",28.588529586792
+55,"male","Hispanic/Latino",27.7399978637695
+56,"male","Hispanic/Latino",26.8978481292725
+57,"male","Hispanic/Latino",26.0626201629639
+58,"male","Hispanic/Latino",25.2353286743164
+59,"male","Hispanic/Latino",24.4175071716309
+60,"male","Hispanic/Latino",23.6103553771973
+61,"male","Hispanic/Latino",22.8149356842041
+62,"male","Hispanic/Latino",22.0311260223389
+63,"male","Hispanic/Latino",21.2574634552002
+64,"male","Hispanic/Latino",20.4913864135742
+65,"male","Hispanic/Latino",19.7308731079102
+66,"male","Hispanic/Latino",18.97536277771
+67,"male","Hispanic/Latino",18.2256755828857
+68,"male","Hispanic/Latino",17.4826641082764
+69,"male","Hispanic/Latino",16.7478199005127
+70,"male","Hispanic/Latino",16.0224723815918
+71,"male","Hispanic/Latino",15.3073177337646
+72,"male","Hispanic/Latino",14.602632522583
+73,"male","Hispanic/Latino",13.9089374542236
+74,"male","Hispanic/Latino",13.2266025543213
+75,"male","Hispanic/Latino",12.5560455322266
+76,"male","Hispanic/Latino",11.8975954055786
+77,"male","Hispanic/Latino",11.2520952224731
+78,"male","Hispanic/Latino",10.6225156784058
+79,"male","Hispanic/Latino",10.0092887878418
+80,"male","Hispanic/Latino",9.41422748565674
+81,"male","Hispanic/Latino",8.83779430389404
+82,"male","Hispanic/Latino",8.28039932250977
+83,"male","Hispanic/Latino",7.7431263923645
+84,"male","Hispanic/Latino",7.22916555404663
+85,"male","Hispanic/Latino",6.73608779907227
+86,"male","Hispanic/Latino",6.26511573791504
+87,"male","Hispanic/Latino",5.81087112426758
+88,"male","Hispanic/Latino",5.38482141494751
+89,"male","Hispanic/Latino",4.98672389984131
+90,"male","Hispanic/Latino",4.61616659164429
+91,"male","Hispanic/Latino",4.27257490158081
+92,"male","Hispanic/Latino",3.95521831512451
+93,"male","Hispanic/Latino",3.66322302818298
+94,"male","Hispanic/Latino",3.39558815956116
+95,"male","Hispanic/Latino",3.15120410919189
+96,"male","Hispanic/Latino",2.928870677948
+97,"male","Hispanic/Latino",2.72732210159302
+98,"male","Hispanic/Latino",2.545245885849
+99,"male","Hispanic/Latino",2.38130497932434
+100,"male","Hispanic/Latino",2.2341582775116
+0,"female","Hispanic/Latino",84.3073577880859
+1,"female","Hispanic/Latino",83.7112808227539
+2,"female","Hispanic/Latino",82.7363891601562
+3,"female","Hispanic/Latino",81.7496109008789
+4,"female","Hispanic/Latino",80.759880065918
+5,"female","Hispanic/Latino",79.7678146362305
+6,"female","Hispanic/Latino",78.7760162353516
+7,"female","Hispanic/Latino",77.7837448120117
+8,"female","Hispanic/Latino",76.791015625
+9,"female","Hispanic/Latino",75.7976837158203
+10,"female","Hispanic/Latino",74.8036346435547
+11,"female","Hispanic/Latino",73.808967590332
+12,"female","Hispanic/Latino",72.8141937255859
+13,"female","Hispanic/Latino",71.8202209472656
+14,"female","Hispanic/Latino",70.828239440918
+15,"female","Hispanic/Latino",69.8390731811523
+16,"female","Hispanic/Latino",68.8531265258789
+17,"female","Hispanic/Latino",67.8701858520508
+18,"female","Hispanic/Latino",66.8896865844727
+19,"female","Hispanic/Latino",65.9107284545898
+20,"female","Hispanic/Latino",64.9325866699219
+21,"female","Hispanic/Latino",63.9551582336426
+22,"female","Hispanic/Latino",62.9785499572754
+23,"female","Hispanic/Latino",62.0025253295898
+24,"female","Hispanic/Latino",61.0268516540527
+25,"female","Hispanic/Latino",60.0513954162598
+26,"female","Hispanic/Latino",59.0760078430176
+27,"female","Hispanic/Latino",58.1007308959961
+28,"female","Hispanic/Latino",57.1258277893066
+29,"female","Hispanic/Latino",56.1516876220703
+30,"female","Hispanic/Latino",55.178596496582
+31,"female","Hispanic/Latino",54.2067031860352
+32,"female","Hispanic/Latino",53.235969543457
+33,"female","Hispanic/Latino",52.266242980957
+34,"female","Hispanic/Latino",51.2972526550293
+35,"female","Hispanic/Latino",50.3288269042969
+36,"female","Hispanic/Latino",49.3610801696777
+37,"female","Hispanic/Latino",48.3941917419434
+38,"female","Hispanic/Latino",47.428092956543
+39,"female","Hispanic/Latino",46.4627227783203
+40,"female","Hispanic/Latino",45.4981842041016
+41,"female","Hispanic/Latino",44.5344924926758
+42,"female","Hispanic/Latino",43.5720443725586
+43,"female","Hispanic/Latino",42.6118278503418
+44,"female","Hispanic/Latino",41.6550559997559
+45,"female","Hispanic/Latino",40.7026214599609
+46,"female","Hispanic/Latino",39.7549057006836
+47,"female","Hispanic/Latino",38.8118515014648
+48,"female","Hispanic/Latino",37.8733406066895
+49,"female","Hispanic/Latino",36.9391174316406
+50,"female","Hispanic/Latino",36.0090408325195
+51,"female","Hispanic/Latino",35.0833587646484
+52,"female","Hispanic/Latino",34.1623458862305
+53,"female","Hispanic/Latino",33.2459373474121
+54,"female","Hispanic/Latino",32.3339538574219
+55,"female","Hispanic/Latino",31.426342010498
+56,"female","Hispanic/Latino",30.5229072570801
+57,"female","Hispanic/Latino",29.6239700317383
+58,"female","Hispanic/Latino",28.7305965423584
+59,"female","Hispanic/Latino",27.8442783355713
+60,"female","Hispanic/Latino",26.9661312103271
+61,"female","Hispanic/Latino",26.0969772338867
+62,"female","Hispanic/Latino",25.2366008758545
+63,"female","Hispanic/Latino",24.3838577270508
+64,"female","Hispanic/Latino",23.5369243621826
+65,"female","Hispanic/Latino",22.6945190429688
+66,"female","Hispanic/Latino",21.8565692901611
+67,"female","Hispanic/Latino",21.0239410400391
+68,"female","Hispanic/Latino",20.1973857879639
+69,"female","Hispanic/Latino",19.3779754638672
+70,"female","Hispanic/Latino",18.5667018890381
+71,"female","Hispanic/Latino",17.7642230987549
+72,"female","Hispanic/Latino",16.9711589813232
+73,"female","Hispanic/Latino",16.1884803771973
+74,"female","Hispanic/Latino",15.4172992706299
+75,"female","Hispanic/Latino",14.658784866333
+76,"female","Hispanic/Latino",13.913628578186
+77,"female","Hispanic/Latino",13.1834735870361
+78,"female","Hispanic/Latino",12.4697351455688
+79,"female","Hispanic/Latino",11.7746229171753
+80,"female","Hispanic/Latino",11.0967016220093
+81,"female","Hispanic/Latino",10.4382410049438
+82,"female","Hispanic/Latino",9.79738140106201
+83,"female","Hispanic/Latino",9.17759704589844
+84,"female","Hispanic/Latino",8.58574485778809
+85,"female","Hispanic/Latino",8.0166540145874
+86,"female","Hispanic/Latino",7.46703767776489
+87,"female","Hispanic/Latino",6.93469667434692
+88,"female","Hispanic/Latino",6.43133878707886
+89,"female","Hispanic/Latino",5.95718812942505
+90,"female","Hispanic/Latino",5.51228713989258
+91,"female","Hispanic/Latino",5.09649276733398
+92,"female","Hispanic/Latino",4.70946836471558
+93,"female","Hispanic/Latino",4.35069704055786
+94,"female","Hispanic/Latino",4.0194787979126
+95,"female","Hispanic/Latino",3.7149498462677
+96,"female","Hispanic/Latino",3.43609714508057
+97,"female","Hispanic/Latino",3.18177723884583
+98,"female","Hispanic/Latino",2.95073890686035
+99,"female","Hispanic/Latino",2.74164795875549
+100,"female","Hispanic/Latino",2.55311298370361
+0,"male","non-Hispanic White",76.0853271484375
+1,"male","non-Hispanic White",75.4798965454102
+2,"male","non-Hispanic White",74.5126037597656
+3,"male","non-Hispanic White",73.5362243652344
+4,"male","non-Hispanic White",72.5511322021484
+5,"male","non-Hispanic White",71.5630416870117
+6,"male","non-Hispanic White",70.5741729736328
+7,"male","non-Hispanic White",69.5836639404297
+8,"male","non-Hispanic White",68.5919189453125
+9,"male","non-Hispanic White",67.5992736816406
+10,"male","non-Hispanic White",66.6061172485352
+11,"male","non-Hispanic White",65.6130828857422
+12,"male","non-Hispanic White",64.6211624145508
+13,"male","non-Hispanic White",63.6317176818848
+14,"male","non-Hispanic White",62.6463203430176
+15,"male","non-Hispanic White",61.6661758422852
+16,"male","non-Hispanic White",60.6915817260742
+17,"male","non-Hispanic White",59.7227363586426
+18,"male","non-Hispanic White",58.7604637145996
+19,"male","non-Hispanic White",57.8055953979492
+20,"male","non-Hispanic White",56.8585014343262
+21,"male","non-Hispanic White",55.9192008972168
+22,"male","non-Hispanic White",54.9870948791504
+23,"male","non-Hispanic White",54.0610656738281
+24,"male","non-Hispanic White",53.1396141052246
+25,"male","non-Hispanic White",52.2215270996094
+26,"male","non-Hispanic White",51.3062629699707
+27,"male","non-Hispanic White",50.3935623168945
+28,"male","non-Hispanic White",49.4830169677734
+29,"male","non-Hispanic White",48.5743598937988
+30,"male","non-Hispanic White",47.6674385070801
+31,"male","non-Hispanic White",46.7621765136719
+32,"male","non-Hispanic White",45.8583641052246
+33,"male","non-Hispanic White",44.9555854797363
+34,"male","non-Hispanic White",44.0532684326172
+35,"male","non-Hispanic White",43.151008605957
+36,"male","non-Hispanic White",42.2490005493164
+37,"male","non-Hispanic White",41.3474464416504
+38,"male","non-Hispanic White",40.4461135864258
+39,"male","non-Hispanic White",39.5447883605957
+40,"male","non-Hispanic White",38.6436233520508
+41,"male","non-Hispanic White",37.7433395385742
+42,"male","non-Hispanic White",36.8449630737305
+43,"male","non-Hispanic White",35.9492835998535
+44,"male","non-Hispanic White",35.0568084716797
+45,"male","non-Hispanic White",34.1678810119629
+46,"male","non-Hispanic White",33.2827301025391
+47,"male","non-Hispanic White",32.4019966125488
+48,"male","non-Hispanic White",31.5267715454102
+49,"male","non-Hispanic White",30.6585330963135
+50,"male","non-Hispanic White",29.7986335754395
+51,"male","non-Hispanic White",28.9472160339355
+52,"male","non-Hispanic White",28.1044692993164
+53,"male","non-Hispanic White",27.2715759277344
+54,"male","non-Hispanic White",26.4494800567627
+55,"male","non-Hispanic White",25.6382064819336
+56,"male","non-Hispanic White",24.8369445800781
+57,"male","non-Hispanic White",24.0447177886963
+58,"male","non-Hispanic White",23.2610664367676
+59,"male","non-Hispanic White",22.4859848022461
+60,"male","non-Hispanic White",21.7196750640869
+61,"male","non-Hispanic White",20.9625587463379
+62,"male","non-Hispanic White",20.2143802642822
+63,"male","non-Hispanic White",19.4741439819336
+64,"male","non-Hispanic White",18.7403678894043
+65,"male","non-Hispanic White",18.012020111084
+66,"male","non-Hispanic White",17.288610458374
+67,"male","non-Hispanic White",16.5719509124756
+68,"male","non-Hispanic White",15.8627147674561
+69,"male","non-Hispanic White",15.1620674133301
+70,"male","non-Hispanic White",14.4725275039673
+71,"male","non-Hispanic White",13.7906742095947
+72,"male","non-Hispanic White",13.1247005462646
+73,"male","non-Hispanic White",12.4685125350952
+74,"male","non-Hispanic White",11.8258218765259
+75,"male","non-Hispanic White",11.1943283081055
+76,"male","non-Hispanic White",10.5790729522705
+77,"male","non-Hispanic White",9.98064231872559
+78,"male","non-Hispanic White",9.40268516540527
+79,"male","non-Hispanic White",8.84084415435791
+80,"male","non-Hispanic White",8.29747104644775
+81,"male","non-Hispanic White",7.77214813232422
+82,"male","non-Hispanic White",7.2636923789978
+83,"male","non-Hispanic White",6.77535486221313
+84,"male","non-Hispanic White",6.31037998199463
+85,"male","non-Hispanic White",5.86591148376465
+86,"male","non-Hispanic White",5.44301605224609
+87,"male","non-Hispanic White",5.03564786911011
+88,"male","non-Hispanic White",4.65568351745605
+89,"male","non-Hispanic White",4.30261659622192
+90,"male","non-Hispanic White",3.97578883171082
+91,"male","non-Hispanic White",3.67439866065979
+92,"male","non-Hispanic White",3.39751410484314
+93,"male","non-Hispanic White",3.14409184455872
+94,"male","non-Hispanic White",2.91299390792847
+95,"male","non-Hispanic White",2.70300722122192
+96,"male","non-Hispanic White",2.5128653049469
+97,"male","non-Hispanic White",2.34126877784729
+98,"male","non-Hispanic White",2.18690490722656
+99,"male","non-Hispanic White",2.0484664440155
+100,"male","non-Hispanic White",1.92466831207275
+0,"female","non-Hispanic White",80.9811401367188
+1,"female","non-Hispanic White",80.3179397583008
+2,"female","non-Hispanic White",79.3378601074219
+3,"female","non-Hispanic White",78.3504409790039
+4,"female","non-Hispanic White",77.361213684082
+5,"female","non-Hispanic White",76.3694229125977
+6,"female","non-Hispanic White",75.376953125
+7,"female","non-Hispanic White",74.3836517333984
+8,"female","non-Hispanic White",73.3897247314453
+9,"female","non-Hispanic White",72.3952941894531
+10,"female","non-Hispanic White",71.4005126953125
+11,"female","non-Hispanic White",70.4056625366211
+12,"female","non-Hispanic White",69.4112014770508
+13,"female","non-Hispanic White",68.4178085327148
+14,"female","non-Hispanic White",67.4262619018555
+15,"female","non-Hispanic White",66.4371185302734
+16,"female","non-Hispanic White",65.4506225585938
+17,"female","non-Hispanic White",64.4668045043945
+18,"female","non-Hispanic White",63.4856872558594
+19,"female","non-Hispanic White",62.5072059631348
+20,"female","non-Hispanic White",61.531307220459
+21,"female","non-Hispanic White",60.5580406188965
+22,"female","non-Hispanic White",59.5874061584473
+23,"female","non-Hispanic White",58.6191902160645
+24,"female","non-Hispanic White",57.6530799865723
+25,"female","non-Hispanic White",56.6887893676758
+26,"female","non-Hispanic White",55.726131439209
+27,"female","non-Hispanic White",54.7650718688965
+28,"female","non-Hispanic White",53.8057975769043
+29,"female","non-Hispanic White",52.8486442565918
+30,"female","non-Hispanic White",51.8938789367676
+31,"female","non-Hispanic White",50.941707611084
+32,"female","non-Hispanic White",49.9920082092285
+33,"female","non-Hispanic White",49.0444221496582
+34,"female","non-Hispanic White",48.0983772277832
+35,"female","non-Hispanic White",47.1534538269043
+36,"female","non-Hispanic White",46.2098007202148
+37,"female","non-Hispanic White",45.2676658630371
+38,"female","non-Hispanic White",44.3269653320312
+39,"female","non-Hispanic White",43.3877067565918
+40,"female","non-Hispanic White",42.4500923156738
+41,"female","non-Hispanic White",41.5147018432617
+42,"female","non-Hispanic White",40.5821876525879
+43,"female","non-Hispanic White",39.6529273986816
+44,"female","non-Hispanic White",38.7269668579102
+45,"female","non-Hispanic White",37.804256439209
+46,"female","non-Hispanic White",36.8848075866699
+47,"female","non-Hispanic White",35.9690017700195
+48,"female","non-Hispanic White",35.0574798583984
+49,"female","non-Hispanic White",34.1511688232422
+50,"female","non-Hispanic White",33.2508888244629
+51,"female","non-Hispanic White",32.3566474914551
+52,"female","non-Hispanic White",31.468469619751
+53,"female","non-Hispanic White",30.5870628356934
+54,"female","non-Hispanic White",29.7129669189453
+55,"female","non-Hispanic White",28.8461380004883
+56,"female","non-Hispanic White",27.9862575531006
+57,"female","non-Hispanic White",27.1326522827148
+58,"female","non-Hispanic White",26.284553527832
+59,"female","non-Hispanic White",25.4413681030273
+60,"female","non-Hispanic White",24.6029376983643
+61,"female","non-Hispanic White",23.7695274353027
+62,"female","non-Hispanic White",22.9414882659912
+63,"female","non-Hispanic White",22.119068145752
+64,"female","non-Hispanic White",21.302490234375
+65,"female","non-Hispanic White",20.4920673370361
+66,"female","non-Hispanic White",19.6877956390381
+67,"female","non-Hispanic White",18.8906097412109
+68,"female","non-Hispanic White",18.101734161377
+69,"female","non-Hispanic White",17.3236351013184
+70,"female","non-Hispanic White",16.5577087402344
+71,"female","non-Hispanic White",15.8027820587158
+72,"female","non-Hispanic White",15.0641527175903
+73,"female","non-Hispanic White",14.3383045196533
+74,"female","non-Hispanic White",13.6251239776611
+75,"female","non-Hispanic White",12.9233808517456
+76,"female","non-Hispanic White",12.2379579544067
+77,"female","non-Hispanic White",11.5683917999268
+78,"female","non-Hispanic White",10.914867401123
+79,"female","non-Hispanic White",10.2810945510864
+80,"female","non-Hispanic White",9.66352939605713
+81,"female","non-Hispanic White",9.06672954559326
+82,"female","non-Hispanic White",8.48758220672607
+83,"female","non-Hispanic White",7.92994928359985
+84,"female","non-Hispanic White",7.40117073059082
+85,"female","non-Hispanic White",6.89517450332642
+86,"female","non-Hispanic White",6.40801095962524
+87,"female","non-Hispanic White",5.93690156936646
+88,"female","non-Hispanic White",5.49413347244263
+89,"female","non-Hispanic White",5.07956504821777
+90,"female","non-Hispanic White",4.69288635253906
+91,"female","non-Hispanic White",4.33361721038818
+92,"female","non-Hispanic White",4.00111770629883
+93,"female","non-Hispanic White",3.69459247589111
+94,"female","non-Hispanic White",3.41311192512512
+95,"female","non-Hispanic White",3.1556224822998
+96,"female","non-Hispanic White",2.92097020149231
+97,"female","non-Hispanic White",2.70791864395142
+98,"female","non-Hispanic White",2.5151731967926
+99,"female","non-Hispanic White",2.34140062332153
+100,"female","non-Hispanic White",2.18525218963623
+0,"male","non-Hispanic Black",71.5101928710938
+1,"male","non-Hispanic Black",71.3681640625
+2,"male","non-Hispanic Black",70.4124069213867
+3,"male","non-Hispanic Black",69.4400177001953
+4,"male","non-Hispanic Black",68.4644241333008
+5,"male","non-Hispanic Black",67.4806518554688
+6,"male","non-Hispanic Black",66.4962158203125
+7,"male","non-Hispanic Black",65.5103607177734
+8,"male","non-Hispanic Black",64.5231018066406
+9,"male","non-Hispanic Black",63.5339279174805
+10,"male","non-Hispanic Black",62.5425605773926
+11,"male","non-Hispanic Black",61.5496368408203
+12,"male","non-Hispanic Black",60.5573539733887
+13,"male","non-Hispanic Black",59.5696029663086
+14,"male","non-Hispanic Black",58.5910568237305
+15,"male","non-Hispanic Black",57.6248550415039
+16,"male","non-Hispanic Black",56.6715621948242
+17,"male","non-Hispanic Black",55.7303352355957
+18,"male","non-Hispanic Black",54.800724029541
+19,"male","non-Hispanic Black",53.8817253112793
+20,"male","non-Hispanic Black",52.9721336364746
+21,"male","non-Hispanic Black",52.0715446472168
+22,"male","non-Hispanic Black",51.1789474487305
+23,"male","non-Hispanic Black",50.2917747497559
+24,"male","non-Hispanic Black",49.4069862365723
+25,"male","non-Hispanic Black",48.522403717041
+26,"male","non-Hispanic Black",47.637279510498
+27,"male","non-Hispanic Black",46.7516860961914
+28,"male","non-Hispanic Black",45.8655624389648
+29,"male","non-Hispanic Black",44.9792327880859
+30,"male","non-Hispanic Black",44.0931358337402
+31,"male","non-Hispanic Black",43.2072372436523
+32,"male","non-Hispanic Black",42.3217391967773
+33,"male","non-Hispanic Black",41.4378280639648
+34,"male","non-Hispanic Black",40.5568389892578
+35,"male","non-Hispanic Black",39.6794357299805
+36,"male","non-Hispanic Black",38.8061561584473
+37,"male","non-Hispanic Black",37.936695098877
+38,"male","non-Hispanic Black",37.0697937011719
+39,"male","non-Hispanic Black",36.2039260864258
+40,"male","non-Hispanic Black",35.3383483886719
+41,"male","non-Hispanic Black",34.4734497070312
+42,"male","non-Hispanic Black",33.6104278564453
+43,"male","non-Hispanic Black",32.7503318786621
+44,"male","non-Hispanic Black",31.8941745758057
+45,"male","non-Hispanic Black",31.0426616668701
+46,"male","non-Hispanic Black",30.1961212158203
+47,"male","non-Hispanic Black",29.3551158905029
+48,"male","non-Hispanic Black",28.5206699371338
+49,"male","non-Hispanic Black",27.6941471099854
+50,"male","non-Hispanic Black",26.8768653869629
+51,"male","non-Hispanic Black",26.0688228607178
+52,"male","non-Hispanic Black",25.2704887390137
+53,"male","non-Hispanic Black",24.4840316772461
+54,"male","non-Hispanic Black",23.7118339538574
+55,"male","non-Hispanic Black",22.9551620483398
+56,"male","non-Hispanic Black",22.2134323120117
+57,"male","non-Hispanic Black",21.4856204986572
+58,"male","non-Hispanic Black",20.7719650268555
+59,"male","non-Hispanic Black",20.0733489990234
+60,"male","non-Hispanic Black",19.3907222747803
+61,"male","non-Hispanic Black",18.7248344421387
+62,"male","non-Hispanic Black",18.0753707885742
+63,"male","non-Hispanic Black",17.441234588623
+64,"male","non-Hispanic Black",16.820442199707
+65,"male","non-Hispanic Black",16.2112064361572
+66,"male","non-Hispanic Black",15.61412525177
+67,"male","non-Hispanic Black",15.0292749404907
+68,"male","non-Hispanic Black",14.4540319442749
+69,"male","non-Hispanic Black",13.8842134475708
+70,"male","non-Hispanic Black",13.3173418045044
+71,"male","non-Hispanic Black",12.7501020431519
+72,"male","non-Hispanic Black",12.1936006546021
+73,"male","non-Hispanic Black",11.6416425704956
+74,"male","non-Hispanic Black",11.1039533615112
+75,"male","non-Hispanic Black",10.5768766403198
+76,"male","non-Hispanic Black",10.0600481033325
+77,"male","non-Hispanic Black",9.55941867828369
+78,"male","non-Hispanic Black",9.06695652008057
+79,"male","non-Hispanic Black",8.5956974029541
+80,"male","non-Hispanic Black",8.13974285125732
+81,"male","non-Hispanic Black",7.69363117218018
+82,"male","non-Hispanic Black",7.26070833206177
+83,"male","non-Hispanic Black",6.85390710830688
+84,"male","non-Hispanic Black",6.47162818908691
+85,"male","non-Hispanic Black",6.09895849227905
+86,"male","non-Hispanic Black",5.734938621521
+87,"male","non-Hispanic Black",5.39052391052246
+88,"male","non-Hispanic Black",5.06532955169678
+89,"male","non-Hispanic Black",4.75891494750977
+90,"male","non-Hispanic Black",4.47079086303711
+91,"male","non-Hispanic Black",4.20041656494141
+92,"male","non-Hispanic Black",3.94721245765686
+93,"male","non-Hispanic Black",3.71056056022644
+94,"male","non-Hispanic Black",3.48981332778931
+95,"male","non-Hispanic Black",3.28429770469666
+96,"male","non-Hispanic Black",3.09332251548767
+97,"male","non-Hispanic Black",2.91618371009827
+98,"male","non-Hispanic Black",2.75217080116272
+99,"male","non-Hispanic Black",2.60057210922241
+100,"male","non-Hispanic Black",2.46067929267883
+0,"female","non-Hispanic Black",78.0791015625
+1,"female","non-Hispanic Black",77.8557586669922
+2,"female","non-Hispanic Black",76.9038925170898
+3,"female","non-Hispanic Black",75.9330978393555
+4,"female","non-Hispanic Black",74.9503021240234
+5,"female","non-Hispanic Black",73.9698944091797
+6,"female","non-Hispanic Black",72.985237121582
+7,"female","non-Hispanic Black",71.9983139038086
+8,"female","non-Hispanic Black",71.0096893310547
+9,"female","non-Hispanic Black",70.0199203491211
+10,"female","non-Hispanic Black",69.0295181274414
+11,"female","non-Hispanic Black",68.0389938354492
+12,"female","non-Hispanic Black",67.0488586425781
+13,"female","non-Hispanic Black",66.0596237182617
+14,"female","non-Hispanic Black",65.0717697143555
+15,"female","non-Hispanic Black",64.0857238769531
+16,"female","non-Hispanic Black",63.1016578674316
+17,"female","non-Hispanic Black",62.1198463439941
+18,"female","non-Hispanic Black",61.1409492492676
+19,"female","non-Hispanic Black",60.1656646728516
+20,"female","non-Hispanic Black",59.1943359375
+21,"female","non-Hispanic Black",58.2271118164062
+22,"female","non-Hispanic Black",57.2636528015137
+23,"female","non-Hispanic Black",56.3032455444336
+24,"female","non-Hispanic Black",55.3449058532715
+25,"female","non-Hispanic Black",54.3879356384277
+26,"female","non-Hispanic Black",53.4321441650391
+27,"female","non-Hispanic Black",52.4776496887207
+28,"female","non-Hispanic Black",51.5245895385742
+29,"female","non-Hispanic Black",50.5733337402344
+30,"female","non-Hispanic Black",49.6243515014648
+31,"female","non-Hispanic Black",48.6780700683594
+32,"female","non-Hispanic Black",47.7347755432129
+33,"female","non-Hispanic Black",46.7946548461914
+34,"female","non-Hispanic Black",45.8575744628906
+35,"female","non-Hispanic Black",44.9232864379883
+36,"female","non-Hispanic Black",43.9918022155762
+37,"female","non-Hispanic Black",43.0633354187012
+38,"female","non-Hispanic Black",42.138011932373
+39,"female","non-Hispanic Black",41.2161636352539
+40,"female","non-Hispanic Black",40.2983016967773
+41,"female","non-Hispanic Black",39.3852272033691
+42,"female","non-Hispanic Black",38.4773788452148
+43,"female","non-Hispanic Black",37.5744476318359
+44,"female","non-Hispanic Black",36.6755714416504
+45,"female","non-Hispanic Black",35.780158996582
+46,"female","non-Hispanic Black",34.8881301879883
+47,"female","non-Hispanic Black",34.000301361084
+48,"female","non-Hispanic Black",33.1179656982422
+49,"female","non-Hispanic Black",32.2428932189941
+50,"female","non-Hispanic Black",31.3765144348145
+51,"female","non-Hispanic Black",30.5188179016113
+52,"female","non-Hispanic Black",29.6697788238525
+53,"female","non-Hispanic Black",28.8306217193604
+54,"female","non-Hispanic Black",28.0026111602783
+55,"female","non-Hispanic Black",27.1862316131592
+56,"female","non-Hispanic Black",26.381175994873
+57,"female","non-Hispanic Black",25.5865573883057
+58,"female","non-Hispanic Black",24.8015785217285
+59,"female","non-Hispanic Black",24.025577545166
+60,"female","non-Hispanic Black",23.2582321166992
+61,"female","non-Hispanic Black",22.4994583129883
+62,"female","non-Hispanic Black",21.7491893768311
+63,"female","non-Hispanic Black",21.0073299407959
+64,"female","non-Hispanic Black",20.2737236022949
+65,"female","non-Hispanic Black",19.5481567382812
+66,"female","non-Hispanic Black",18.8312072753906
+67,"female","non-Hispanic Black",18.1226215362549
+68,"female","non-Hispanic Black",17.4213676452637
+69,"female","non-Hispanic Black",16.7256126403809
+70,"female","non-Hispanic Black",16.0354804992676
+71,"female","non-Hispanic Black",15.3498229980469
+72,"female","non-Hispanic Black",14.6724615097046
+73,"female","non-Hispanic Black",14.0097360610962
+74,"female","non-Hispanic Black",13.3600549697876
+75,"female","non-Hispanic Black",12.7252159118652
+76,"female","non-Hispanic Black",12.1066131591797
+77,"female","non-Hispanic Black",11.499397277832
+78,"female","non-Hispanic Black",10.9138956069946
+79,"female","non-Hispanic Black",10.3453216552734
+80,"female","non-Hispanic Black",9.78862190246582
+81,"female","non-Hispanic Black",9.2535343170166
+82,"female","non-Hispanic Black",8.73336315155029
+83,"female","non-Hispanic Black",8.22766399383545
+84,"female","non-Hispanic Black",7.73955154418945
+85,"female","non-Hispanic Black",7.27251768112183
+86,"female","non-Hispanic Black",6.81798505783081
+87,"female","non-Hispanic Black",6.38536357879639
+88,"female","non-Hispanic Black",5.97562313079834
+89,"female","non-Hispanic Black",5.58853721618652
+90,"female","non-Hispanic Black",5.22379016876221
+91,"female","non-Hispanic Black",4.88097906112671
+92,"female","non-Hispanic Black",4.55961656570435
+93,"female","non-Hispanic Black",4.25913906097412
+94,"female","non-Hispanic Black",3.97890973091125
+95,"female","non-Hispanic Black",3.71823024749756
+96,"female","non-Hispanic Black",3.47634553909302
+97,"female","non-Hispanic Black",3.25245451927185
+98,"female","non-Hispanic Black",3.04572010040283
+99,"female","non-Hispanic Black",2.8552770614624
+100,"female","non-Hispanic Black",2.68024230003357

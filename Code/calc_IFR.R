@@ -1,10 +1,8 @@
 rm(list=ls())
 
-source("~/Dropbox/COVIDVaccineModelling/Code/seroprevalence_functions.R")
+source("seroprevalence_functions.R")
 
-setwd("~/Dropbox/COVIDVaccineModelling/Data")
-
-glm_fit <- readRDS("death_regression_output_2020-01-19_1.RDS")
+glm_fit <- readRDS("../Data/death_regression_output_2020-01-19_1.RDS")
 x <- glm_fit$data
 
 agg_x <- aggregate(cbind(population,cum_deaths) ~ age_cat,x,sum)
@@ -14,7 +12,7 @@ agg_x$age_low <- as.numeric(sub("-.*","",agg_x$age_cat))
 agg_x$age_upp <- as.numeric(sub(".*-","",agg_x$age_cat))
 
 # Read in age seroprevalence curve parameters
-res <- readRDS("seroprev_pars.RDS")
+res <- readRDS("../Data/seroprev_pars.RDS")
 pars <- res$par
 
 agg_x$seroprev <- seroprevalence(agg_x,pars[1],pars[2])
@@ -22,4 +20,4 @@ agg_x$infections <- agg_x$seroprev * agg_x$population
 print(sum(agg_x$infections))
 
 agg_x$IFR <- agg_x$cum_deaths/agg_x$infections
-saveRDS(agg_x,"CA_IFR_by_age.RDS")
+saveRDS(agg_x,"../Data/CA_IFR_by_age.RDS")

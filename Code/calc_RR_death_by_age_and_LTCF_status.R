@@ -2,10 +2,8 @@ rm(list=ls())
 
 library(reshape2)
 
-setwd("~/Dropbox/COVIDVaccineModelling/Data")
-
 # Read in simulated population
-df <- readRDS("CA_pop.RDS")
+df <- readRDS("../Data/CA_pop.RDS")
 
 # Add variable for aggregation
 df$population <- 1
@@ -23,7 +21,7 @@ names(agg_age_SNF_wide)[names(agg_age_SNF_wide) %in% c(0,1)] <- c("non_SNF","SNF
 agg_age_SNF_wide$SNF[is.na(agg_age_SNF_wide$SNF)] <- 0
 
 # Read in CDPH age death data
-deaths_age <- read.csv("CDPHLTCFDeathAgeData/AgeData/CDPHDeathAgeData.csv",stringsAsFactors = F)
+deaths_age <- read.csv("../Data/CDPHDeathAgeData/CDPHDeathAgeData.csv",stringsAsFactors = F)
 
 deaths_age$YEARS[deaths_age$YEARS==">100"] <- "100-105"
 
@@ -65,4 +63,4 @@ deaths_age_mrg$RR_age_non_SNF_CI_upp <- res$CI_upp
 
 # Reorder
 deaths_age_mrg <- deaths_age_mrg[c(2:nrow(deaths_age_mrg),1),]
-write.csv(deaths_age_mrg,"CDPHLTCFDeathAgeData/RR_death_by_age_and_LTCF_status.csv",row.names = F)
+write.csv(deaths_age_mrg,"../Data/CDPHDeathAgeData/RR_death_by_age_and_LTCF_status.csv",row.names = F)

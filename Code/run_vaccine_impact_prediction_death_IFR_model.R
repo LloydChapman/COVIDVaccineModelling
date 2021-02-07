@@ -415,7 +415,7 @@ for (j in 1:length(t_sim)){
 # save(mean_agg_out,x,file = paste0("pred_vacc_impact_",n_v,"doses_",100*v_e,"prcnt_eff",".RData"))
 # 
 # # Plot predictions
-# fdir <- "~/Dropbox/COVIDVaccineModelling/Figures/"
+# fdir <- "../Figures/"
 # plot_predictions(x,n_v,fdir)
 # 
 # # Plot optimal vaccine allocation

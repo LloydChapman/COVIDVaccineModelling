@@ -7,12 +7,12 @@ library(ggplot2)
 library(viridis)
 library(RColorBrewer)
 
-source("~/Dropbox/COVIDVaccineModelling/Code/processing_functions.R")
-source("~/Dropbox/COVIDVaccineModelling/Code/prediction_functions.R")
-source("~/Dropbox/COVIDVaccineModelling/Code/calc_hosp_ICU_death_risk.R")
+source("processing_functions.R")
+source("prediction_functions.R")
+source("calc_hosp_ICU_death_risk.R")
 
 # Set working directory
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 setwd(dir)
 
 # Register doParallel backend with maximum no. workers - 1
@@ -115,7 +115,7 @@ for (j in 1:length(t_sim)){
   x <- calc_cases_deaths_DALYs_averted(x)
   
   # Set directory for saving figures into
-  fdir <- paste0("~/Dropbox/COVIDVaccineModelling/Figures/",dir1,t_sim[j],"days/")
+  fdir <- paste0("../Figures/",dir1,t_sim[j],"days/")
   
   ## Calculate impact for different vaccination strategies with different numbers of initial vaccine doses
   res <- vector("list",length(n_v))
@@ -172,7 +172,7 @@ for (j in 1:length(t_sim)){
 # save(mean_agg_out,x,file = paste0("pred_vacc_impact_",n_v,"doses_",100*v_e,"prcnt_eff",".RData"))
 # 
 # # Plot predictions
-# fdir <- "~/Dropbox/COVIDVaccineModelling/Figures/"
+# fdir <- "../Figures/"
 # plot_predictions(x,n_v,fdir)
 # 
 # # Plot optimal vaccine allocation

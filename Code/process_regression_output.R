@@ -1,6 +1,8 @@
+rm(list=ls())
+
 library(broom)
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 fnms <- list.files(dir,pattern = "^regression_output_.*_1.RDS")
 
 for (i in 1:length(fnms)){

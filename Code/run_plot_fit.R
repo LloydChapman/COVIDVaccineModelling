@@ -1,8 +1,8 @@
 rm(list=ls())
 
-source("~/Dropbox/COVIDVaccineModelling/Code/prediction_functions.R")
+source("prediction_functions.R")
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 setwd(dir)  
 fnms <- list.files(dir,pattern = "regression_output_.*.RData")
 deaths_ratio <- readRDS("deaths_multiplier.RDS")

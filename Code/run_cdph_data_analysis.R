@@ -1,10 +1,10 @@
 rm(list=ls())
 source("/mnt/nlo_shared/code/analysis_functions.R")
-# source("~/Dropbox/COVIDVaccineModelling/Code/analysis_functions.R")
+# source("analysis_functions.R")
 
 dir <- "/mnt/nlo_shared/data/"
 fnms <- list.files(dir,pattern = "processed_data_.*_2")
-# dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+# dir <- "../Data/"
 # fnms <- list.files(dir,pattern = "processed_dummy_data_")
 
 # Run Poisson regression

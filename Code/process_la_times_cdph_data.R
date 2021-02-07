@@ -1,7 +1,9 @@
+rm(list=ls())
+
 library(reshape2)
 library(ggplot2)
 
-setwd("~/Dropbox/COVIDVaccineModelling/Data/california-coronavirus-data/")
+setwd("../../california-coronavirus-data/")
 
 calc_new_cases <- function(x){c(0,diff(x))}
 
@@ -69,7 +71,7 @@ cdph_race_ethnicity$date <- as.Date(cdph_race_ethnicity$date)
 cdph_race_ethnicity <- cdph_race_ethnicity[order(cdph_race_ethnicity$date),]
 # sum(cdph_race_ethnicity$population_percent[cdph_race_ethnicity$date=="2020-10-10"])
 
-agg_age_df <- read.csv("../CA_age_distn.csv",stringsAsFactors = F)
+agg_age_df <- read.csv("../COVIDVaccineModelling/Data/CA_age_distn.csv",stringsAsFactors = F)
 cdph_race_ethnicity$population <- cdph_race_ethnicity$population_percent*agg_age_df$population[match(cdph_race_ethnicity$age,agg_age_df$age_grp)]
 cdph_race_ethnicity$time <- as.numeric(cdph_race_ethnicity$date - min(cdph_race_ethnicity$date)) 
 
@@ -102,8 +104,8 @@ cdph_pstve_test_rate <- read.csv("cdph-positive-test-rate.csv",stringsAsFactors 
 cdph_hospital_patient_county <- read.csv("cdph-hospital-patient-county-totals.csv",stringsAsFactors = F)
 
 # Prison counts (by prison and total)
-cdcr_prison_totals <- read.csv("cdcr_prison_totals.csv",stringsAsFactors = F)
-cdcr_state_totals <- read.csv("cdcr_prison_totals.csv",stringsAsFactors = F)
+cdcr_prison_totals <- read.csv("cdcr-prison-totals.csv",stringsAsFactors = F)
+cdcr_state_totals <- read.csv("cdcr-prison-totals.csv",stringsAsFactors = F)
 
 # Nursing home totals by county
 cdph_nursing_home_county_total <- read.csv("cdph-nursing-home-county-totals.csv",stringsAsFactors = F)

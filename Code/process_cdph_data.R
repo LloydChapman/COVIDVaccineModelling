@@ -192,7 +192,6 @@ agg_deaths_dummy$n_deaths <- rpois(nrow(agg_deaths),mean(agg_deaths$n_deaths))
 write.csv(agg_deaths_dummy,"/mnt/nlo_shared/data/agg_deaths_dummy3.csv",row.names=F)
 
 # # Read in dummy data
-# setwd("~/Dropbox/COVIDVaccineModelling/Code")
 # agg_cases <- read.csv("../Data/agg_cases_dummy.csv")
 # agg_cases$first_report_date <- as.Date(agg_cases$first_report_date)                                            
 

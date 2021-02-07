@@ -1,9 +1,11 @@
+rm(list=ls())
+
 library(readxl)
+library(reshape2)
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 
-setwd(dir)
-fnms <- list.files("USLifeTables/")
+fnms <- list.files(paste0(dir,"USLifeTables/"))
 
 llt <- vector("list",length(fnms))
 colnms <- c("all_male","all_female","Hispanic/Latino_male","Hispanic/Latino_female","non-Hispanic White_male","non-Hispanic White_female","non-Hispanic Black_male","non-Hispanic Black_female")
@@ -25,4 +27,4 @@ lt_long <- lt_long[,c("age","sex","race_ethnicity","life_expectancy")]
 lt_long$race_ethnicity[lt_long$race_ethnicity=="all"] <- "Other"
 
 # Save compiled life table
-write.csv(lt_long,"US_life_table.csv",row.names = F)
+write.csv(lt_long,paste0(dir,"US_life_table.csv"),row.names = F)

@@ -1,10 +1,9 @@
 rm(list=ls())
 
-source("~/Dropbox/COVIDVaccineModelling/Code/prediction_functions.R")
-source("~/Dropbox/COVIDVaccineModelling/Code/calc_hosp_ICU_death_risk.R")
+source("prediction_functions.R")
+source("calc_hosp_ICU_death_risk.R")
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
-setwd(dir)
+dir <- "../Data/"
 fnms <- list.files(dir,pattern = "^regression_output_.*_1.RDS")
 
 # Relative risks for HCWs, inmates, SNF residents, teachers and homeless individuals
@@ -19,12 +18,12 @@ res <- calc_hosp_ICU_death_risk()
 p_death <- res$p_death_given_clin_by_age_and_sex
 
 # Read in names of aggregated counties in CDPH data
-county_names <- read.csv("county_names.csv",stringsAsFactors = F)
+county_names <- read.csv(paste0(dir,"county_names.csv"),stringsAsFactors = F)
 
 ### COVIDForecastHub predicted cases ###
-# CFH <- read.csv("COVIDForecastHubData/2020-09-21-all-forecasted-cases-model-data.csv",stringsAsFactors = F)
-# CFH <- read.csv("COVIDForecastHubData/2020-10-19-all-forecasted-cases-model-data.csv",stringsAsFactors = F)
-CFH <- read.csv("COVIDForecastHubData/2020-11-23-all-forecasted-cases-model-data.csv",stringsAsFactors = F)
+# CFH <- read.csv(paste0(dir,"COVIDForecastHubData/2020-09-21-all-forecasted-cases-model-data.csv"),stringsAsFactors = F)
+# CFH <- read.csv(paste0(dir,"COVIDForecastHubData/2020-10-19-all-forecasted-cases-model-data.csv"),stringsAsFactors = F)
+CFH <- read.csv(paste0(dir,"COVIDForecastHubData/2020-11-23-all-forecasted-cases-model-data.csv"),stringsAsFactors = F)
 CFH <- CFH[CFH$model=="Ensemble" & (CFH$State=="California" & CFH$location_name!="California"),]
 CFH$location_name <- gsub(" County, California","",CFH$location_name)
 
@@ -35,7 +34,7 @@ CFH$county_res <- county_names$cdph_county_res[match(CFH$location_name,county_na
 x0 <- aggregate(cbind(point,quantile_0.025,quantile_0.25,quantile_0.75,quantile_0.975) ~ county_res,CFH,sum) 
 
 ### CalCAT predicted deaths ###
-CalCAT <- read.csv("CalCATdata/CalCAT_Custom_Data_2020-12-11.csv",stringsAsFactors = F)
+CalCAT <- read.csv(paste0(dir,"CalCATdata/CalCAT_Custom_Data_2020-12-11.csv"),stringsAsFactors = F)
 View(CalCAT)
 names(CalCAT) <- CalCAT[2,]
 names(CalCAT)[names(CalCAT)=="Modeler/Model"] <- "Model"
@@ -93,24 +92,24 @@ x2 <- merge(x0,x1_wide)
 # Calculate case multiplier to match state-level forecast
 cases_ratio <- numeric(length(fnms))
 deaths_ratio <- numeric(length(fnms))
-dir1 <- "Calibration2/"
+dir1 <- paste0(dir,"Calibration2/")
 dir.create(dir1,recursive = T)
 fdir <- "../Figures/PredictionsVsForecastHub2/"
 for (i in 1:length(fnms)){
   datestr <- gsub("regression_output|\\.RDS","",fnms[i])
-  p_death <- readRDS(paste0("prob_death_given_clin_by_age_and_sex",gsub("regression_output","",fnms[i])))
+  p_death <- readRDS(paste0(dir,"prob_death_given_clin_by_age_and_sex",gsub("regression_output","",fnms[i])))
   # Work out case multiplier to match total cases at state level
-  x <- predict_cases_hosps_deaths(fnms[i],t_sim,r,1,1,p_death)
+  x <- predict_cases_hosps_deaths(paste0(dir,fnms[i]),t_sim,r,1,1,p_death)
   fnm <- paste0("pred",datestr,"_",t_sim,"days.csv")
   write.csv(x,paste0(dir1,fnm),row.names = F)
   cases_ratio[i] <- compare_predictions(dir1,fnm,x2,fdir)$cases_ratio
   # Correct total cases with case multiplier
-  x <- predict_cases_hosps_deaths(fnms[i],t_sim,r,cases_ratio[i],1,p_death)
+  x <- predict_cases_hosps_deaths(paste0(dir,fnms[i]),t_sim,r,cases_ratio[i],1,p_death)
   fnm <- paste0("pred",datestr,"_",t_sim,"days_estd_death_risk.csv")
   write.csv(x,paste0(dir1,fnm),row.names = F)
   deaths_ratio[i] <- compare_predictions(dir1,fnm,x2,fdir)$deaths_ratio
   # Correct total deaths with death multiplier and check deaths match state-level and county-level forecasts
-  x <- predict_cases_hosps_deaths(fnms[i],t_sim,r,cases_ratio[i],deaths_ratio[i],p_death)
+  x <- predict_cases_hosps_deaths(paste0(dir,fnms[i]),t_sim,r,cases_ratio[i],deaths_ratio[i],p_death)
   fnm <- paste0("pred",datestr,"_",t_sim,"days_corrected_death_risk.csv")
   write.csv(x,paste0(dir1,fnm),row.names = F)
   compare_predictions(dir1,fnm,x2,fdir)

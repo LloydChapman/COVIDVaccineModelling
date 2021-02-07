@@ -1,8 +1,8 @@
 rm(list=ls())
 
-source("~/Dropbox/COVIDVaccineModelling/Code/analysis_functions.R")
+source("analysis_functions.R")
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 fnms <- list.files(dir,pattern = "regression_output_.*_1.RDS")
 
 for (i in 1:length(fnms)){

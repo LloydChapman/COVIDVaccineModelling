@@ -3,9 +3,9 @@ rm(list=ls())
 library(reshape2)
 library(ggplot2)
 
-source("~/Dropbox/COVIDVaccineModelling/Code/prediction_functions.R")
+source("prediction_functions.R")
 
-dir <- "~/Dropbox/COVIDVaccineModelling/Data/"
+dir <- "../Data/"
 setwd(dir)
 
 county_names <- read.csv("county_names.csv",stringsAsFactors = F)
