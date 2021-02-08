@@ -164,7 +164,7 @@ cum_deaths$n <- cum_deaths$n/IFR_ratio
 cum_deaths$n_cases <- cum_deaths$n_cases/IFR_ratio
 
 # Load population data
-agg_pop <- read.csv("../Data/agg_pop1.csv",stringsAsFactors = F)
+agg_pop <- read.csv("../Data/agg_pop2.csv",stringsAsFactors = F)
 # Merge with infections and deaths data frame
 x <- expand.grid(county_res=unique(cum_deaths$county_res),age_cat=unique(cum_deaths$age_cat),sex=c(0,1),race_ethnicity=unique(cum_deaths$race_ethnicity),stringsAsFactors = F)
 x <- x[x$race_ethnicity!="Unknown",]
@@ -183,7 +183,7 @@ inc$exp_time <- inc$population * as.numeric(as.Date("2020-10-22")-as.Date("2020-
 # Fit Poisson regression model to estimated cumulative cases
 inc$age_cat <- factor(inc$age_cat,levels = c("50-59",lbls[lbls!="50-59"]))
 glm_fit1 <- glm(round(n_cases) ~ offset(log(exp_time)) + county_res + age_cat + sex + race_ethnicity,family = poisson(link = log),data = inc)
-saveRDS(glm_fit1,"../Data/regression_output_death_IFR_model1.RDS")
+saveRDS(glm_fit1,"../Data/regression_output_death_IFR_model2.RDS")
 HR <- data.frame(Estimate=exp(coef(glm_fit1)),exp(confint.default(glm_fit1)))
 HR$mod <- "Estd"
 HR$names <- row.names(HR)
@@ -207,6 +207,6 @@ HR_comp <- rbind(HR1,HR)
 HR_comp$mod <- factor(HR_comp$mod,levels = c("Obsvd","Estd"))
 
 # Plot
-pdf(paste0("../Figures/",fdir,"param_ests_comparison2.pdf"),width = 9,height = 6)
+pdf(paste0("../Figures/",fdir,"param_ests_comparison3.pdf"),width = 9,height = 6)
 ggplot(HR_comp,aes(x=names,y=Estimate,group=mod,color=as.factor(mod))) + geom_point() + geom_errorbar(aes(ymin=X2.5..,ymax=X97.5..)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + xlab("Parameter") + ylab("Value") + labs(color="Cases")
 dev.off()
