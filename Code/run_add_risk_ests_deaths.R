@@ -97,9 +97,6 @@ agg_deaths_age[,`:=`(RR_LTCF_LB=calc_RR_CI(RR_LTCF,SNF.LTC.residents,LTCF,Not.SN
 agg_deaths_age[is.na(RR_LTCF_LB),RR_LTCF_LB:=0]
 agg_deaths_age[is.na(RR_LTCF_UB),RR_LTCF_UB:=0]
 
-# # Merge with simulated population data frame
-# df <- merge(df,agg_deaths_age[,.(age_cat,RR_LTCF)],by="age_cat")
-
 # Remove LTCF indicator from simulated population data frame
 df[,LTCF:=NULL]
 

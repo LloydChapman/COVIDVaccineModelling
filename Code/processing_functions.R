@@ -31,7 +31,6 @@ load_synth_pop <- function(dir,county_names){
   df$race_ethnicity[df$Race=="White"] <- "non-Hispanic White"
   df$race_ethnicity[df$Race %in% c("AIAN","Asian Alone","Native Hawaiian And Other Pacific Islander Alone","Some other race alone","Two or more races")] <- "Other"
   # Overwrite race/ethnicity for people with Ethnicity="Hispanic or Latino"
-  # df$race_ethnicity[df$Ethnicity==1] <- "Hispanic/Latino"
   df$race_ethnicity[df$Ethnicity=="Hispanic or Latino"] <- "Hispanic/Latino"
   
   names(df) <- tolower(names(df))
@@ -70,14 +69,8 @@ calc_analysis_vars <- function(agg_cases,start_date,agg_pop){
   # Calculate cumulative cases by date for each risk factor group
   y$cum_cases <- ave(y$n,list(y$county_res,y$age_cat,y$sex,y$race_ethnicity),FUN=cumsum)
   y$cum_deaths <- ave(y$n_deaths,list(y$county_res,y$age_cat,y$sex,y$race_ethnicity),FUN=cumsum)
-  # # Check
-  # y[order(y$race_ethnicity,y$sex,y$age_cat,y$county_res,y$first_report_date),][1:40,]
-  
-  ### Merge with population data ###
-  # # Read in population data
-  # agg_pop <- read.csv("/mnt/nlo_shared/data/agg_pop1.csv",stringsAsFactors=F)
-  # agg_pop <- read.csv("../Data/agg_pop1.csv",stringsAsFactors=F)
-  
+
+  # Merge with population data
   y <- merge(y,agg_pop,all.x=T)
   y <- y[,c("first_report_date",names(y)[names(y)!="first_report_date"])]
   y <- y[do.call(order,y),]
@@ -105,14 +98,8 @@ calc_death_analysis_vars <- function(agg_deaths,start_date,agg_pop){
   
   # Calculate cumulative cases by date for each risk factor group
   y$cum_deaths <- ave(y$n_deaths,list(y$county_res,y$age_cat,y$sex,y$race_ethnicity),FUN=cumsum)
-  # # Check
-  # y[order(y$race_ethnicity,y$sex,y$age_cat,y$county_res,y$date_of_death),][1:40,]
-  
-  ### Merge with population data ###
-  # # Read in population data
-  # agg_pop <- read.csv("/mnt/nlo_shared/data/agg_pop1.csv",stringsAsFactors=F)
-  # agg_pop <- read.csv("../Data/agg_pop1.csv",stringsAsFactors=F)
-  
+
+  # Merge with population data
   y <- merge(y,agg_pop,all.x=T)
   y <- y[,c("date_of_death",names(y)[names(y)!="date_of_death"])]
   y <- y[do.call(order,y),]

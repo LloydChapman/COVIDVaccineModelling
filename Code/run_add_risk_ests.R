@@ -9,7 +9,6 @@ source("prediction_functions.R")
 fnm <- "regression_output_2020-07-19_1.RDS"
 
 # Relative risks for HCWs, prisoners, SNF residents, teachers and homeless individuals
-# RR <- c(HCW = 3,prisoner = 5.5,SNF = 9,teacher = 1.8,homeless = 1.65)
 RR <- c(HCW = 3,prisoner = 5.5,SNF = 9,teacher = 1.8,homeless = 1.65,essential = 1.7)
 
 # Load processed synthetic population data frame

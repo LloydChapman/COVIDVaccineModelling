@@ -10,10 +10,6 @@ source("analysis_functions.R")
 source("prediction_functions.R")
 
 # Read in death data
-# glm_fit <- readRDS("../Data/death_regression_output_2020-02-05_3.RDS")
-# cum_deaths <- glm_fit$data
-# cum_deaths$n_deaths <- NULL
-# names(cum_deaths)[names(cum_deaths)=="cum_deaths"] <- "n_deaths"
 cum_deaths <- read.csv("../Data/cum_deaths.csv",stringsAsFactors = F)
 
 # Read in and process data from O'Driscoll Nature 2020
@@ -67,8 +63,6 @@ cum_deaths$n_deaths <- cum_deaths$n_deaths - cum_deaths$n_LTCF_deaths
 
 # Backcalculate infections in each risk group using O'Driscoll IFR
 cum_deaths <- backcalculate_infections(cum_deaths,IFR_long)
-# # Multiply estimated number of infections from O'Driscoll IFR by ratio of total estimated from CDC CA seroprevalence estimates to that from O'Driscoll, so that total numbers of infections agree
-# cum_deaths$n <- cum_deaths$n * sum(CA_IFR$infections)/sum(cum_deaths$n)
 print(sum(cum_deaths$n)) #6425783
 # Plot distribution of numbers infected in each risk group 
 hist(cum_deaths$n)
@@ -104,19 +98,21 @@ saveRDS(IFR_ratio,"../Data/IFR_ratio2.RDS")
 
 # Plot observed case counts vs estimated case counts by age
 cum_inf_cases_age_long <- reshape2::melt(cum_inf_cases_age[,c("age_cat","n_cases_obs","n_cases")])
-pdf("../Figures/Backcalculation/obsvd_vs_estd_case_age_counts2.pdf",width = 6,height = 4)
+fdir <- "Backcalculation/"
+dir.create(fdir,recursive = T)
+pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts2.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
 dev.off()
 
 # Plot observed case counts vs corrected estimated case counts by age
 cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"] <- cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"]/IFR_ratio
-pdf("../Figures/Backcalculation/obsvd_vs_estd_case_age_counts_crrctd2.pdf",width = 6,height = 4)
+pdf(paste0("../Figures/",Backcalculation,"obsvd_vs_estd_case_age_counts_crrctd2.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
 dev.off()
 
 # Plot observed and estimated age distributions of cases and infections
 cum_inf_cases_age_long1 <- reshape2::melt(cum_inf_cases_age[,c("age_cat","prop_inf","prop_cases_obs","prop_cases")])
-pdf("../Figures/Backcalculation/obsvd_vs_estd_case_age_distns2.pdf",width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_distns2.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long1,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Proportion") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("estd infctns","obsvd cases","estd cases"))
 dev.off()
 
@@ -134,7 +130,6 @@ agg_df_age <- aggregate(population ~ age_cat_sero,df,sum)
 rm(df)
 gc()
 agg_df_age <- merge(agg_df_age,seroprev,by="age_cat_sero")
-# agg_df_age <- aggregate(seroprev ~ age_cat_sero,df,sum)
 
 # Calculate expected number seropositive in each serological age category
 agg_df_age$n_sero <- agg_df_age$population * agg_df_age$seroprev
@@ -154,13 +149,13 @@ agg_df_age$n[agg_df_age$age_cat_sero=="65+"] <- 0.5*cum_inf_cases_age$n[cum_inf_
 
 # Plot observed vs estimated numbers of infections by age
 agg_df_age_long <- reshape2::melt(agg_df_age,id.vars="age_cat_sero",measure.vars=c("n_sero","n"))
-pdf("../Figures/Backcalculation/infections_seroprev_vs_IFR3.pdf",width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR3.pdf"),width = 6,height = 4)
 ggplot(agg_df_age_long,aes(x=age_cat_sero,y=value,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Infections") + scale_fill_discrete(name="",labels=c("seroprev","IFR"))
 dev.off()
 
 # Plot observed vs corrected estimated numbers of infections by age
 agg_df_age_long$value[agg_df_age_long$variable=="n"] <- agg_df_age_long$value[agg_df_age_long$variable=="n"]/IFR_ratio
-pdf("../Figures/Backcalculation/infections_seroprev_vs_IFR_crrctd3.pdf",width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR_crrctd3.pdf"),width = 6,height = 4)
 ggplot(agg_df_age_long,aes(x=age_cat_sero,y=value,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Infections") + scale_fill_discrete(name="",labels=c("seroprev","IFR"))
 dev.off()
 
@@ -194,9 +189,7 @@ HR$mod <- "Estd"
 HR$names <- row.names(HR)
 # process_regression_output("../Data/","regression_output_death_IFR_model.RDS")
 
-# Load data
-# glm_fit2 <- readRDS("../Data/regression_output_2020-07-19_1.RDS")
-# glm_fit2 <- readRDS("../Data/regression_output_2020-01-19_1.RDS")
+# Merge with cases data frame
 cum_cases <- merge(x,cum_cases,by=demogrphcs,all.x = T)
 cum_cases$n[is.na(cum_cases$n)] <- 0
 
@@ -214,6 +207,6 @@ HR_comp <- rbind(HR1,HR)
 HR_comp$mod <- factor(HR_comp$mod,levels = c("Obsvd","Estd"))
 
 # Plot
-pdf("../Figures/Backcalculation/param_ests_comparison2.pdf",width = 9,height = 6)
+pdf(paste0("../Figures/",fdir,"param_ests_comparison2.pdf"),width = 9,height = 6)
 ggplot(HR_comp,aes(x=names,y=Estimate,group=mod,color=as.factor(mod))) + geom_point() + geom_errorbar(aes(ymin=X2.5..,ymax=X97.5..)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + xlab("Parameter") + ylab("Value") + labs(color="Cases")
 dev.off()

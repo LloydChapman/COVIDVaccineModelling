@@ -31,7 +31,6 @@ run_regression <- function(dir,fnm){
     inc$susc[i] <- res$susc
     inc$exp_time[i] <- res$exp_time
   }
-  # write.csv(inc,paste0(dir,gsub("processed_data","inc",fnm)),row.names = F)
   
   # Run Poisson regression
   glm_fit <- glm(cum_cases ~ offset(log(exp_time)) + county_res + age_cat + sex + race_ethnicity,family = poisson(link=log),data = inc)
@@ -58,7 +57,6 @@ run_death_regression <- function(dir,fnm){
     inc$alive[i] <- res$alive
     inc$surv_time[i] <- res$surv_time
   }
-  # write.csv(inc,paste0(dir,gsub("processed_data","inc",fnm)),row.names = F)
   
   # Run Poisson regression
   glm_fit <- glm(cum_deaths ~ offset(log(surv_time)) + county_res + age_cat + sex + race_ethnicity,family = poisson(link=log),data = inc)

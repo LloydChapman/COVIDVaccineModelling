@@ -66,6 +66,8 @@ or in Windows command line by entering
 C:\>"C:\<path>\<to>\Rscript.exe" C:<path>\<to>\run_vaccine_impact_prediction_death_IFR_model.R
 ```
 
+where "<path>\\<to>" represents the paths to Rscript.exe and 'run_vaccine_prediction_death_IFR_model.R' on your machine.
+
 ## Built With
 
 * [R version 4.0.3 (2020-10-10)](https://www.r-project.org/)
