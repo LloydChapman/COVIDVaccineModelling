@@ -99,14 +99,14 @@ saveRDS(IFR_ratio,"../Data/IFR_ratio2.RDS")
 # Plot observed case counts vs estimated case counts by age
 cum_inf_cases_age_long <- reshape2::melt(cum_inf_cases_age[,c("age_cat","n_cases_obs","n_cases")])
 fdir <- "Backcalculation/"
-dir.create(fdir,recursive = T)
+dir.create(paste0("../Figures/",fdir),recursive = T)
 pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts2.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
 dev.off()
 
 # Plot observed case counts vs corrected estimated case counts by age
 cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"] <- cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"]/IFR_ratio
-pdf(paste0("../Figures/",Backcalculation,"obsvd_vs_estd_case_age_counts_crrctd2.pdf"),width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts_crrctd2.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
 dev.off()
 

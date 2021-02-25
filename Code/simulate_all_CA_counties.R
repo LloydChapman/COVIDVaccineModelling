@@ -2,61 +2,25 @@
 # Author: Poojan Shukla
 # Goal: Simulate populations of all counties in CA
 
+rm(list=ls())
+
 #Load Packages
-require(deSolve)
 require(ggplot2)
 library(triangle)
 library(dplyr)
 library(tidycensus) # the one you care about 
 library(acs)
 library(censusapi)
+library(devtools)
+if (!require(hashmap)){
+  install_github("nathan-russell/hashmap")
+}
 library(hashmap)
 library(foreach)
 library(doParallel)
 library(MASS)
 library(readxl)
 library(truncnorm)
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-# Load census data 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-Yuba_df = simulate_county2("Yuba County, California")
-Merced_df = simulate_county2("Merced County, California")
-Alpine_df = simulate_county2("Alpine County, California")
-Sonoma_df = simulate_county2("Sonoma County, California")
-#SF_df = simulate_county2("San Francisco County, California")
-SF_df = read.csv("sf_df.csv")
-San_Bern_df = simulate_county2("San Bernardino County, California")
-
-
-SF_homeless = filter(SF_df, Special.Population == 5)
-SF_homeless_expected_total = 8035
-SF_homeless_simulated = nrow(SF_homeless)
-frac_african_american = nrow(filter(SF_homeless, Race == "African American"))/SF_homeless_simulated
-frac_white = nrow(filter(SF_homeless, Race == "White"))/SF_homeless_simulated
-frac_asian = nrow(filter(SF_homeless, Race == "Asian Alone"))/SF_homeless_simulated
-frac_AIAN = nrow(filter(SF_homeless, Race == "AIAN"))/SF_homeless_simulated
-frac_other = nrow(filter(SF_homeless, Race == "Some other race alone"))/SF_homeless_simulated
-
-for (county in counties_in_CA) {
-  df = mclapply(county, simulate_county2, mc.cores = numCores)
-  print(county)
-  write.csv(df, paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
-  #final_df = rbind(final_df, df)
-}
-
-for (county in counties_in_CA) {
-  df = read.csv(paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
-  final_df = rbind(final_df, df)
-}
-write.csv(final_df, "/Users/poojanshukla/Downloads/counties/All_CA_Counties.csv")
-#pops = c()
-#for (county in counties_in_CA) {
-#  pop = filter(census, NAME == county)[3,4]
-#  pops = c(pops, pop)
-#}
-#
-#cnty_totals = data.frame("County" = counties_in_CA, "Pop Total" = pops)
-#write.csv(cnty_totals,"county_totals.csv")
 
 chis_data_validation <- function(county_name, county_df) {
   #for each co morbidiity, examine prevalence by age
@@ -508,16 +472,6 @@ ALF_validation <- function(county_name, county_df){
   )
 }
 
-essential_workers_validation("Yuba County, California", Yuba_df)
-ALF_validation("Yuba County, California", Yuba_df)
-
-essential_workers_validation("Sonoma County, California", Sonoma_df)
-ALF_validation("Sonoma County, California", Sonoma_df)
-
-Alpine_comp_df = chis_data_validation("Alpine County, California", Alpine_df)
-Yuba_comp_df = chis_data_validation("Yuba County, California", Yuba_df)
-chis_data_validation("Merced County, California", Merced_df)
-
 special_populations_validation <- function(county_name, county_df) {
   # 0 for no special population
   # 1 for healthcare workers
@@ -764,17 +718,17 @@ special_populations_validation <- function(county_name, county_df) {
   print(num_homeless)
   
 }
-special_populations_validation("Yuba County, California", Yuba_df)
-special_populations_validation("Sonoma County, California", Sonoma_df)
 
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Load census data 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
-special_populations_validation("Yuba County, California", Yuba_df)
 my_key <-"665e6ac52698b6e2518d187bc9865bdc1c4192eb"
-census_api_key("665e6ac52698b6e2518d187bc9865bdc1c4192eb", install="TRUE")
-setwd("/Users/poojanshukla/Downloads")
+census_api_key(my_key, overwrite=T, install=T)
+readRenviron("~/.Renviron")
 
-cpsaat11b <- read_excel("cpsaat11b.xlsx")
+cpsaat11b <- read_excel("../Data/cpsaat11b.xlsx")
 hcw_age_data = data.frame(cpsaat11b)
 
 load_variables <- load_variables(year=2018,dataset="acs5")
@@ -906,7 +860,7 @@ CA_prop_male = census_CA[4,4]/census_CA[3,4]
 CA_prop_female = census_CA[28,4]/census_CA[3,4]
 num_homeless_CA = 151278 #from HUD estimate
 num_homeless_LA = 66436
-homeless_data = data.frame(read_excel("CoC by county.xlsx"))
+homeless_data = data.frame(read_excel("../Data/CoC by county.xlsx"))
 
 
 prop_male_homeless_CA = 98404/(98404+50467)
@@ -1444,55 +1398,55 @@ hcw_props = vector()
 homeless_props = vector()
 SNF_ages = c(0,4, 5,9, 10,14, 15,17,18,24,25,34,35,44,45,54,55,64,65,74,75,84,85,100)
 
-#Load in CHIS data tables
-chis_overall = read.csv(file = "20201115/CA_wide.csv")
-chis_ab40 = read.csv(file = "20201115/ab40_df.csv")
-chis_ab34 = read.csv(file = "20201115/ab34_df.csv")
-chis_ab29 = read.csv(file = "20201115/ab29_df.csv")
-chis_diabetes = read.csv(file = "20201115/diabetes_df.csv")
-chis_smkcur = read.csv(file = "20201115/smkcur_df.csv")
-chis_ab52 = read.csv(file = "20201115/ab52_df.csv")
-
-chis_bmi_age = read.csv(file ="20201115/bmi_age_df.csv")
-chis_bmi_sex = read.csv(file = "20201115/bmi_sex_df.csv")
-chis_bmi_race = read.csv(file = "20201115/bmi_race_df.csv")
-chis_bmi_eth = read.csv(file = "20201115/bmi_eth_df.csv")
-
-CA_bmi_mean = read.csv(file = "20201115/bmi_overall_df.csv")[1,2]
-CA_bmi_std = read.csv(file = "20201115/bmi_overall_df.csv")[1,4] * CA_bmi_mean
-
-chis_age_county_ab34 = read.csv(file = "20201118/ab34_age_county_df.csv")
-chis_age_county_ab40 = read.csv(file = "20201118/ab40_age_county_df.csv")
-chis_age_county_ab29 = read.csv(file = "20201118/ab29_age_county_df.csv")
-chis_age_county_smkcur = read.csv(file = "20201118/smkcur_age_county_df.csv")
-chis_age_county_diabetes = read.csv(file = "20201118/diabetes_age_county_df.csv")
-chis_age_county_bmi = read.csv(file = "20201115/bmi_age_county_df.csv")
-chis_age_county_bmi_totals = read.csv(file = "20201115/bmi_age_county_totals.csv")
-
-chis_age_county_ab34 = chis_age_county_ab34[order(chis_age_county_ab34$srage_code),]
-chis_age_county_ab40 = chis_age_county_ab40[order(chis_age_county_ab40$srage_code),]
-chis_age_county_ab29 = chis_age_county_ab29[order(chis_age_county_ab29$srage_code),]
-chis_age_county_diabetes = chis_age_county_diabetes[order(chis_age_county_diabetes$srage_code),]
-chis_age_county_smkcur = chis_age_county_smkcur[order(chis_age_county_smkcur$srage_code),]
-chis_age_county_bmi = chis_age_county_bmi[order(chis_age_county_bmi$srage_code),]
-chis_age_county_bmi_totals = chis_age_county_bmi_totals[order(chis_age_county_bmi_totals$srage_code),]
-
-chis_age_county_ab34[chis_age_county_ab34 == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_ab40[chis_age_county_ab40 == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_ab29[chis_age_county_ab29 == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_diabetes[chis_age_county_diabetes == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_smkcur[chis_age_county_smkcur == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_bmi[chis_age_county_bmi == "San Bernandino County, California"] = "San Bernardino County, California"
-chis_age_county_bmi_totals[chis_age_county_bmi_totals == "San Bernandino County, California"] = "San Bernardino County, California"
-
-#overall_bmi_mean = (chis_bmi_sex[1,3]*chis_bmi_sex[1,7] + chis_bmi_sex[2,3]*chis_bmi_sex[2,7])/(chis_bmi_sex[1,7]+chis_bmi_sex[2,7])
-#overall_bmi_std = sqrt((chis_bmi_sex[1,3]*chis_bmi_sex[1,9])^2 + (chis_bmi_sex[2,3]*chis_bmi_sex[2,9])^2)
-ab40_overall = chis_overall[2,2]
-ab34_overall = chis_overall[12,2]
-ab29_overall = chis_overall[16,2]
-ab52_overall = chis_overall[14,2]
-diabetes_overall = chis_overall[6,2]
-smkcur_overall = chis_overall[9,2]
+# #Load in CHIS data tables
+# chis_overall = read.csv(file = "20201115/CA_wide.csv")
+# chis_ab40 = read.csv(file = "20201115/ab40_df.csv")
+# chis_ab34 = read.csv(file = "20201115/ab34_df.csv")
+# chis_ab29 = read.csv(file = "20201115/ab29_df.csv")
+# chis_diabetes = read.csv(file = "20201115/diabetes_df.csv")
+# chis_smkcur = read.csv(file = "20201115/smkcur_df.csv")
+# chis_ab52 = read.csv(file = "20201115/ab52_df.csv")
+# 
+# chis_bmi_age = read.csv(file ="20201115/bmi_age_df.csv")
+# chis_bmi_sex = read.csv(file = "20201115/bmi_sex_df.csv")
+# chis_bmi_race = read.csv(file = "20201115/bmi_race_df.csv")
+# chis_bmi_eth = read.csv(file = "20201115/bmi_eth_df.csv")
+# 
+# CA_bmi_mean = read.csv(file = "20201115/bmi_overall_df.csv")[1,2]
+# CA_bmi_std = read.csv(file = "20201115/bmi_overall_df.csv")[1,4] * CA_bmi_mean
+# 
+# chis_age_county_ab34 = read.csv(file = "20201118/ab34_age_county_df.csv")
+# chis_age_county_ab40 = read.csv(file = "20201118/ab40_age_county_df.csv")
+# chis_age_county_ab29 = read.csv(file = "20201118/ab29_age_county_df.csv")
+# chis_age_county_smkcur = read.csv(file = "20201118/smkcur_age_county_df.csv")
+# chis_age_county_diabetes = read.csv(file = "20201118/diabetes_age_county_df.csv")
+# chis_age_county_bmi = read.csv(file = "20201115/bmi_age_county_df.csv")
+# chis_age_county_bmi_totals = read.csv(file = "20201115/bmi_age_county_totals.csv")
+# 
+# chis_age_county_ab34 = chis_age_county_ab34[order(chis_age_county_ab34$srage_code),]
+# chis_age_county_ab40 = chis_age_county_ab40[order(chis_age_county_ab40$srage_code),]
+# chis_age_county_ab29 = chis_age_county_ab29[order(chis_age_county_ab29$srage_code),]
+# chis_age_county_diabetes = chis_age_county_diabetes[order(chis_age_county_diabetes$srage_code),]
+# chis_age_county_smkcur = chis_age_county_smkcur[order(chis_age_county_smkcur$srage_code),]
+# chis_age_county_bmi = chis_age_county_bmi[order(chis_age_county_bmi$srage_code),]
+# chis_age_county_bmi_totals = chis_age_county_bmi_totals[order(chis_age_county_bmi_totals$srage_code),]
+# 
+# chis_age_county_ab34[chis_age_county_ab34 == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_ab40[chis_age_county_ab40 == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_ab29[chis_age_county_ab29 == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_diabetes[chis_age_county_diabetes == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_smkcur[chis_age_county_smkcur == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_bmi[chis_age_county_bmi == "San Bernandino County, California"] = "San Bernardino County, California"
+# chis_age_county_bmi_totals[chis_age_county_bmi_totals == "San Bernandino County, California"] = "San Bernardino County, California"
+# 
+# #overall_bmi_mean = (chis_bmi_sex[1,3]*chis_bmi_sex[1,7] + chis_bmi_sex[2,3]*chis_bmi_sex[2,7])/(chis_bmi_sex[1,7]+chis_bmi_sex[2,7])
+# #overall_bmi_std = sqrt((chis_bmi_sex[1,3]*chis_bmi_sex[1,9])^2 + (chis_bmi_sex[2,3]*chis_bmi_sex[2,9])^2)
+# ab40_overall = chis_overall[2,2]
+# ab34_overall = chis_overall[12,2]
+# ab29_overall = chis_overall[16,2]
+# ab52_overall = chis_overall[14,2]
+# diabetes_overall = chis_overall[6,2]
+# smkcur_overall = chis_overall[9,2]
 
 for (county in counties_in_CA) {
   occ_filtered = filter(census_occ, NAME == county)
@@ -1579,222 +1533,222 @@ for (county in counties_in_CA) {
                 county_female_35_44, county_female_45_54, county_female_55_64,
                 county_female_65_74, county_female_75_84, county_female_85_plus)
   
-  # filter county data table from chis to only look at this county
-  #age_county_strat = filter(chis_age_county, county = "County")
-  filt_ab34_age_county = filter(chis_age_county_ab34, srcnty_code == county)
-  filt_ab40_age_county = filter(chis_age_county_ab40, srcnty_code == county)
-  filt_ab29_age_county = filter(chis_age_county_ab29, srcnty_code == county)
-  filt_diabetes_age_county = filter(chis_age_county_diabetes, srcnty_code == county)
-  filt_smkcur_age_county = filter(chis_age_county_smkcur, srcnty_code == county)
-  filt_bmi_age_county = filter(chis_age_county_bmi, srcnty_code == county)
-  filt_bmi_age_county_totals = filter(chis_age_county_bmi_totals, srcnty_code == county)
-  
-  filt_ab34_age_county[filt_ab34_age_county == 'na'] = 0
-  filt_ab34_age_county[is.na(filt_ab34_age_county)] = 0
-  
-  filt_ab40_age_county[filt_ab40_age_county == 'na'] = 0
-  filt_ab40_age_county[is.na(filt_ab40_age_county)] = 0
-  
-  filt_ab29_age_county[filt_ab29_age_county == 'na'] = 0
-  filt_ab29_age_county[is.na(filt_ab29_age_county)] = 0
-  
-  filt_diabetes_age_county[filt_diabetes_age_county == 'na'] = 0
-  filt_diabetes_age_county[is.na(filt_diabetes_age_county)] = 0
-  
-  filt_smkcur_age_county[filt_smkcur_age_county == 'na'] = 0
-  filt_smkcur_age_county[is.na(filt_smkcur_age_county)] = 0
-  
-  filt_bmi_age_county[filt_bmi_age_county == 'na'] = 0
-  filt_bmi_age_county[is.na(filt_bmi_age_county)] = 0
-
-  filt_bmi_age_county_totals[filt_bmi_age_county_totals == 'na'] = 0
-  filt_bmi_age_county_totals[is.na(filt_bmi_age_county_totals)] = 0
+  # # filter county data table from chis to only look at this county
+  # #age_county_strat = filter(chis_age_county, county = "County")
+  # filt_ab34_age_county = filter(chis_age_county_ab34, srcnty_code == county)
+  # filt_ab40_age_county = filter(chis_age_county_ab40, srcnty_code == county)
+  # filt_ab29_age_county = filter(chis_age_county_ab29, srcnty_code == county)
+  # filt_diabetes_age_county = filter(chis_age_county_diabetes, srcnty_code == county)
+  # filt_smkcur_age_county = filter(chis_age_county_smkcur, srcnty_code == county)
+  # filt_bmi_age_county = filter(chis_age_county_bmi, srcnty_code == county)
+  # filt_bmi_age_county_totals = filter(chis_age_county_bmi_totals, srcnty_code == county)
+  # 
+  # filt_ab34_age_county[filt_ab34_age_county == 'na'] = 0
+  # filt_ab34_age_county[is.na(filt_ab34_age_county)] = 0
+  # 
+  # filt_ab40_age_county[filt_ab40_age_county == 'na'] = 0
+  # filt_ab40_age_county[is.na(filt_ab40_age_county)] = 0
+  # 
+  # filt_ab29_age_county[filt_ab29_age_county == 'na'] = 0
+  # filt_ab29_age_county[is.na(filt_ab29_age_county)] = 0
+  # 
+  # filt_diabetes_age_county[filt_diabetes_age_county == 'na'] = 0
+  # filt_diabetes_age_county[is.na(filt_diabetes_age_county)] = 0
+  # 
+  # filt_smkcur_age_county[filt_smkcur_age_county == 'na'] = 0
+  # filt_smkcur_age_county[is.na(filt_smkcur_age_county)] = 0
+  # 
+  # filt_bmi_age_county[filt_bmi_age_county == 'na'] = 0
+  # filt_bmi_age_county[is.na(filt_bmi_age_county)] = 0
+  # 
+  # filt_bmi_age_county_totals[filt_bmi_age_county_totals == 'na'] = 0
+  # filt_bmi_age_county_totals[is.na(filt_bmi_age_county_totals)] = 0
   
   for (j in c(1: length(race_groups))) {
-    #filter race table
-    race_char = race_groups[j]
-    race_index_chis = 0
-    if (race_char == "White") {
-      race_index_chis = 19
-    } else if (race_char == "African American") {
-      race_index_chis = 13
-    } else if (race_char == "AIAN") {
-      race_index_chis = 14
-    } else if (race_char == "Asian Alone") {
-      race_index_chis = 15
-    } else if (race_char == "Native Hawaiian And Other Pacific Islander Alone") {
-      race_index_chis = 18
-    } else if (race_char == "Some other race alone") {
-      race_index_chis = 17
-    } else {
-      race_index_chis = 16
-    }
-    ab40_race = chis_ab40[race_index_chis, 4]
-    ab34_race = chis_ab34[race_index_chis, 4]
-    ab29_race = chis_ab29[race_index_chis, 4]
-    ab52_race = chis_ab52[race_index_chis, 4]
-    diabetes_race = chis_diabetes[race_index_chis, 4]
-    smkcur_race = chis_smkcur[race_index_chis, 3]
-    bmi_race_mean = chis_bmi_race[race_index_chis-12, 3]
-    bmi_race_std = chis_bmi_race[race_index_chis-12, 9] * bmi_race_mean
+    # #filter race table
+    # race_char = race_groups[j]
+    # race_index_chis = 0
+    # if (race_char == "White") {
+    #   race_index_chis = 19
+    # } else if (race_char == "African American") {
+    #   race_index_chis = 13
+    # } else if (race_char == "AIAN") {
+    #   race_index_chis = 14
+    # } else if (race_char == "Asian Alone") {
+    #   race_index_chis = 15
+    # } else if (race_char == "Native Hawaiian And Other Pacific Islander Alone") {
+    #   race_index_chis = 18
+    # } else if (race_char == "Some other race alone") {
+    #   race_index_chis = 17
+    # } else {
+    #   race_index_chis = 16
+    # }
+    # ab40_race = chis_ab40[race_index_chis, 4]
+    # ab34_race = chis_ab34[race_index_chis, 4]
+    # ab29_race = chis_ab29[race_index_chis, 4]
+    # ab52_race = chis_ab52[race_index_chis, 4]
+    # diabetes_race = chis_diabetes[race_index_chis, 4]
+    # smkcur_race = chis_smkcur[race_index_chis, 3]
+    # bmi_race_mean = chis_bmi_race[race_index_chis-12, 3]
+    # bmi_race_std = chis_bmi_race[race_index_chis-12, 9] * bmi_race_mean
     
     for (sex in sex_list) {
-      #filter sex table
-      #filt_chis_sex = chis_sex[sex]
-      sex_index_chis = 1
-      if (sex == "Male") { 
-        bmi_sex_mean = chis_bmi_sex[2,3]
-        bmi_sex_std = bmi_sex_mean*chis_bmi_sex[2,9] 
-        sex_index_chis = 2
-      } else {
-        bmi_sex_mean = chis_bmi_sex[1,3]
-        bmi_sex_std = bmi_sex_mean*chis_bmi_sex[1,9] 
-      }
-      ab40_sex = chis_ab40[sex_index_chis, 4]
-      ab34_sex = chis_ab34[sex_index_chis, 4]
-      ab29_sex = chis_ab29[sex_index_chis, 4]
-      ab52_sex = chis_ab52[sex_index_chis, 4]
-      diabetes_sex = chis_diabetes[sex_index_chis, 4]
-      smkcur_sex = chis_smkcur[sex_index_chis, 3]
+      # #filter sex table
+      # #filt_chis_sex = chis_sex[sex]
+      # sex_index_chis = 1
+      # if (sex == "Male") { 
+      #   bmi_sex_mean = chis_bmi_sex[2,3]
+      #   bmi_sex_std = bmi_sex_mean*chis_bmi_sex[2,9] 
+      #   sex_index_chis = 2
+      # } else {
+      #   bmi_sex_mean = chis_bmi_sex[1,3]
+      #   bmi_sex_std = bmi_sex_mean*chis_bmi_sex[1,9] 
+      # }
+      # ab40_sex = chis_ab40[sex_index_chis, 4]
+      # ab34_sex = chis_ab34[sex_index_chis, 4]
+      # ab29_sex = chis_ab29[sex_index_chis, 4]
+      # ab52_sex = chis_ab52[sex_index_chis, 4]
+      # diabetes_sex = chis_diabetes[sex_index_chis, 4]
+      # smkcur_sex = chis_smkcur[sex_index_chis, 3]
       
       for (eth in ethnicity_list) {
         #filter eth table
-        if (eth == "Hispanic or Latino") {
-          #filt_eth = chis_eth[,3]
-          bmi_eth_mean = chis_bmi_eth[1,3]
-          bmi_eth_std = chis_bmi_eth[1,9]*bmi_eth_mean
-        } else {
-          #filt_eth = chis_eth[, 4]
-          bmi_eth_mean = chis_bmi_eth[2,3]
-          bmi_eth_std = chis_bmi_eth[2,9]*bmi_eth_mean
-        }
+        # if (eth == "Hispanic or Latino") {
+        #   #filt_eth = chis_eth[,3]
+        #   bmi_eth_mean = chis_bmi_eth[1,3]
+        #   bmi_eth_std = chis_bmi_eth[1,9]*bmi_eth_mean
+        # } else {
+        #   #filt_eth = chis_eth[, 4]
+        #   bmi_eth_mean = chis_bmi_eth[2,3]
+        #   bmi_eth_std = chis_bmi_eth[2,9]*bmi_eth_mean
+        # }
         for (i in c(1:12)) {
-          bmi_mean = 23
-          bmi_std = 2
-          ab40 = 0.071 #wtvr CA avg is
-          ab34 = 0 #assume no heart disease in <18
-          smkcur = 0.02 #5.8% of hs students smoke, roughly 1/3 of the 0-18 pop so assume 2%
-          diabetes = 0.0025 #Google search, assuming 0.25% diabetes in <18
-          ab29 = 0.03 #assume 3% htn for <18 
-          ab52 = 0 #assume no heart failure for < 18
-          if (i > 4) {
-            #bmi_age_mean = filt_bmi_age_county[i-4,4]
-            #bmi_age_std = filt_bmi_age_county[i-4,6]*bmi_age_mean
-            
-            bmi_age_mean = chis_bmi_age[i-4,3]
-            bmi_age_std = bmi_age_mean *chis_bmi_age[i-4,9]
-           
-            ab52_age = chis_ab52[i,4]
-            
-            ab40_age = chis_ab40[i, 4]
-            ab34_age = chis_ab34[i,4]
-            #ab29_age = chis_ab29[i,4]
-            ab29_age = chis_ab29[i, 4]
-            diabetes_age = chis_diabetes[i,4]
-            smkcur_age = chis_smkcur[i,3]
-            #race, sex, eth adjustments
-            
-            #alternative age group mappings when county filtering:
-            #1 65-74
-            #2 75-84
-            #3 55-64
-            #if (filt_bmi_age_county_totals[i-4,5] == "na" | filt_bmi_age_county_totals[i-4,5] < 10 |
-             #   is.na(filt_bmi_age_county_totals[i-4,5])) {
-            #  bmi_age_mean = chis_bmi_age[i-4,3]
-            #  bmi_age_std = bmi_age_mean *chis_bmi_age[i-4,9]
-            #} 
-            if (as.numeric(filt_ab29_age_county[i-4, 14]) + as.numeric(filt_ab29_age_county[i-4, 15]) > 10) {
-              ab29_age = filt_ab29_age_county[i-4,4]
-            }
-            
-            if (as.numeric(filt_ab34_age_county[i-4, 14]) + as.numeric(filt_ab34_age_county[i-4, 15]) > 10) {
-              ab34_age = filt_ab34_age_county[i-4,5]
-            }
-            
-            if (as.numeric(filt_ab40_age_county[i-4, 14]) + as.numeric(filt_ab40_age_county[i-4, 15]) > 10) {
-              ab40_age = filt_ab40_age_county[i-4,5]
-            }
-            
-            if (as.numeric(filt_diabetes_age_county[i-4, 14]) + as.numeric(filt_diabetes_age_county[i-4, 15]) > 10) {
-              diabetes_age = filt_diabetes_age_county[i-4,5]
-            }
-            
-            if (as.numeric(filt_smkcur_age_county[i-4, 14]) + as.numeric(filt_smkcur_age_county[i-4, 15]) > 10) {
-              smkcur_age = filt_smkcur_age_county[i-4,5]
-            }
-            
-            if (as.numeric(filt_bmi_age_county_totals[i-4, 5]) > 10) {
-              bmi_age_mean = filt_bmi_age_county[i-4,4]
-              bmi_age_std = filt_bmi_age_county[i-4,6]*bmi_age_mean
-            }
-          
-            ## add some more conditions to deal with na's, NA's, and <10 vals for other sets
-            ab40 = ab40_age * (ab40_sex/ab40_overall) * (ab40_race/ab40_overall)
-            ab34 = ab34_age * (ab34_sex/ab34_overall) *(ab34_race/ab34_overall)
-            ab29 = ab29_age * (ab29_sex/ab29_overall) *(ab29_race/ab29_overall)
-            ab52 = ab52_age * (ab52_sex/ab52_overall) *(ab52_race/ab52_overall)
-            diabetes = diabetes_age * (diabetes_sex/diabetes_overall) *(diabetes_race/diabetes_overall)
-            smkcur = smkcur_age * (smkcur_sex/smkcur_overall) *(smkcur_race/smkcur_overall)
-            bmi_mean = bmi_age_mean * (bmi_sex_mean/CA_bmi_mean) *(bmi_race_mean/CA_bmi_mean)
-            bmi_std = bmi_age_std * (bmi_sex_std/CA_bmi_std) *(bmi_race_std/CA_bmi_std)
-    
-            
-            ab40 = min(ab40, 1)
-            diabetes = min(diabetes,1)
-            smkcur = min(smkcur, 1)
-            ab34 = min(ab34, 1)
-            ab29 = min(ab29, 1)
-            ab52 = min(ab52, 1)
-            
-            if (is.na(ab40)) {
-              print(county)
-              print(eth)
-              print("ab40")
-              print(i)
-            }
-            if (is.na(ab34)) {
-              print(county)
-              print(eth)
-              print("ab34")
-              print(i)
-            }
-            if (is.na(ab29)) {
-              print(county)
-              print(eth)
-              print("ab29")
-              print(i)
-            }
-            if (is.na(ab52)) {
-              print(county)
-              print(eth)
-              print("ab52")
-              print(i)
-            }
-            if (is.na(diabetes)) {
-              print(county)
-              print(eth)
-              print("diabetes")
-              print(i)
-              print(x2)
-            }
-            if (is.na(smkcur)) {
-              print(county)
-              print(eth)
-              print("smoker")
-              print(i)
-            }
-            if (is.na(bmi_mean) | is.na(bmi_std)) {
-              print(county)
-              print(eth)
-              print("bmi")
-              print(i)
-              print(bmi_age_mean)
-              print(bmi_race_mean)
-              print(bmi_sex_mean)
-              print(bmi_mean)
-              print(bmi_std)
-            }
-            } 
+          # bmi_mean = 23
+          # bmi_std = 2
+          # ab40 = 0.071 #wtvr CA avg is
+          # ab34 = 0 #assume no heart disease in <18
+          # smkcur = 0.02 #5.8% of hs students smoke, roughly 1/3 of the 0-18 pop so assume 2%
+          # diabetes = 0.0025 #Google search, assuming 0.25% diabetes in <18
+          # ab29 = 0.03 #assume 3% htn for <18 
+          # ab52 = 0 #assume no heart failure for < 18
+          # if (i > 4) {
+          #   #bmi_age_mean = filt_bmi_age_county[i-4,4]
+          #   #bmi_age_std = filt_bmi_age_county[i-4,6]*bmi_age_mean
+          #   
+          #   bmi_age_mean = chis_bmi_age[i-4,3]
+          #   bmi_age_std = bmi_age_mean *chis_bmi_age[i-4,9]
+          #  
+          #   ab52_age = chis_ab52[i,4]
+          #   
+          #   ab40_age = chis_ab40[i, 4]
+          #   ab34_age = chis_ab34[i,4]
+          #   #ab29_age = chis_ab29[i,4]
+          #   ab29_age = chis_ab29[i, 4]
+          #   diabetes_age = chis_diabetes[i,4]
+          #   smkcur_age = chis_smkcur[i,3]
+          #   #race, sex, eth adjustments
+          #   
+          #   #alternative age group mappings when county filtering:
+          #   #1 65-74
+          #   #2 75-84
+          #   #3 55-64
+          #   #if (filt_bmi_age_county_totals[i-4,5] == "na" | filt_bmi_age_county_totals[i-4,5] < 10 |
+          #    #   is.na(filt_bmi_age_county_totals[i-4,5])) {
+          #   #  bmi_age_mean = chis_bmi_age[i-4,3]
+          #   #  bmi_age_std = bmi_age_mean *chis_bmi_age[i-4,9]
+          #   #} 
+          #   if (as.numeric(filt_ab29_age_county[i-4, 14]) + as.numeric(filt_ab29_age_county[i-4, 15]) > 10) {
+          #     ab29_age = filt_ab29_age_county[i-4,4]
+          #   }
+          #   
+          #   if (as.numeric(filt_ab34_age_county[i-4, 14]) + as.numeric(filt_ab34_age_county[i-4, 15]) > 10) {
+          #     ab34_age = filt_ab34_age_county[i-4,5]
+          #   }
+          #   
+          #   if (as.numeric(filt_ab40_age_county[i-4, 14]) + as.numeric(filt_ab40_age_county[i-4, 15]) > 10) {
+          #     ab40_age = filt_ab40_age_county[i-4,5]
+          #   }
+          #   
+          #   if (as.numeric(filt_diabetes_age_county[i-4, 14]) + as.numeric(filt_diabetes_age_county[i-4, 15]) > 10) {
+          #     diabetes_age = filt_diabetes_age_county[i-4,5]
+          #   }
+          #   
+          #   if (as.numeric(filt_smkcur_age_county[i-4, 14]) + as.numeric(filt_smkcur_age_county[i-4, 15]) > 10) {
+          #     smkcur_age = filt_smkcur_age_county[i-4,5]
+          #   }
+          #   
+          #   if (as.numeric(filt_bmi_age_county_totals[i-4, 5]) > 10) {
+          #     bmi_age_mean = filt_bmi_age_county[i-4,4]
+          #     bmi_age_std = filt_bmi_age_county[i-4,6]*bmi_age_mean
+          #   }
+          # 
+          #   ## add some more conditions to deal with na's, NA's, and <10 vals for other sets
+          #   ab40 = ab40_age * (ab40_sex/ab40_overall) * (ab40_race/ab40_overall)
+          #   ab34 = ab34_age * (ab34_sex/ab34_overall) *(ab34_race/ab34_overall)
+          #   ab29 = ab29_age * (ab29_sex/ab29_overall) *(ab29_race/ab29_overall)
+          #   ab52 = ab52_age * (ab52_sex/ab52_overall) *(ab52_race/ab52_overall)
+          #   diabetes = diabetes_age * (diabetes_sex/diabetes_overall) *(diabetes_race/diabetes_overall)
+          #   smkcur = smkcur_age * (smkcur_sex/smkcur_overall) *(smkcur_race/smkcur_overall)
+          #   bmi_mean = bmi_age_mean * (bmi_sex_mean/CA_bmi_mean) *(bmi_race_mean/CA_bmi_mean)
+          #   bmi_std = bmi_age_std * (bmi_sex_std/CA_bmi_std) *(bmi_race_std/CA_bmi_std)
+          # 
+          #   
+          #   ab40 = min(ab40, 1)
+          #   diabetes = min(diabetes,1)
+          #   smkcur = min(smkcur, 1)
+          #   ab34 = min(ab34, 1)
+          #   ab29 = min(ab29, 1)
+          #   ab52 = min(ab52, 1)
+          #   
+          #   if (is.na(ab40)) {
+          #     print(county)
+          #     print(eth)
+          #     print("ab40")
+          #     print(i)
+          #   }
+          #   if (is.na(ab34)) {
+          #     print(county)
+          #     print(eth)
+          #     print("ab34")
+          #     print(i)
+          #   }
+          #   if (is.na(ab29)) {
+          #     print(county)
+          #     print(eth)
+          #     print("ab29")
+          #     print(i)
+          #   }
+          #   if (is.na(ab52)) {
+          #     print(county)
+          #     print(eth)
+          #     print("ab52")
+          #     print(i)
+          #   }
+          #   if (is.na(diabetes)) {
+          #     print(county)
+          #     print(eth)
+          #     print("diabetes")
+          #     print(i)
+          #     print(x2)
+          #   }
+          #   if (is.na(smkcur)) {
+          #     print(county)
+          #     print(eth)
+          #     print("smoker")
+          #     print(i)
+          #   }
+          #   if (is.na(bmi_mean) | is.na(bmi_std)) {
+          #     print(county)
+          #     print(eth)
+          #     print("bmi")
+          #     print(i)
+          #     print(bmi_age_mean)
+          #     print(bmi_race_mean)
+          #     print(bmi_sex_mean)
+          #     print(bmi_mean)
+          #     print(bmi_std)
+          #   }
+          # } 
           
           demog_pop = male_ages[i]
           plus_65_bin = male_ages[10] + male_ages[11]
@@ -1914,20 +1868,20 @@ for (county in counties_in_CA) {
           sim7 = rnorm(1, mean = 0.09, sd = 0.003)
           
           string_mash = paste(county, age, sex, race_groups[j], eth)
-          stdev_hash$insert(string_mash, bmi_std)
+          # stdev_hash$insert(string_mash, bmi_std)
           
           hcw_dummy_hash$insert(string_mash, hcw_prop)
           educ_dummy_hash$insert(string_mash, educ_prop)
           
-          asthma_prob_dummy_hash$insert(string_mash, ab40)
-          diabetes_prob_dummy_hash$insert(string_mash, diabetes)
-          smoker_prob_dummy_hash$insert(string_mash, smkcur)
-          #print(smkcur)
-          heart_disease_prob_dummy_hash$insert(string_mash, ab34)
-          hf_prob_dummy_hash$insert(string_mash, ab52)
-          htn_prob_dummy_hash$insert(string_mash, ab29)
-          bmi_dummy_hash$insert(string_mash, bmi_mean)
-          #stdev_hash$insert(string_mash, rnorm(1, mean = 4, sd =1))
+          # asthma_prob_dummy_hash$insert(string_mash, ab40)
+          # diabetes_prob_dummy_hash$insert(string_mash, diabetes)
+          # smoker_prob_dummy_hash$insert(string_mash, smkcur)
+          # #print(smkcur)
+          # heart_disease_prob_dummy_hash$insert(string_mash, ab34)
+          # hf_prob_dummy_hash$insert(string_mash, ab52)
+          # htn_prob_dummy_hash$insert(string_mash, ab29)
+          # bmi_dummy_hash$insert(string_mash, bmi_mean)
+          # #stdev_hash$insert(string_mash, rnorm(1, mean = 4, sd =1))
           
           CF_dummy_hash$insert(string_mash, CF_prop)
           SNF_dummy_hash$insert(string_mash, SNF_prop)
@@ -2094,7 +2048,7 @@ compute_comorbidity2 <- function(county, age, sex, race, ethnicity) {
   #s4 = rnorm(1, mean = p4, sd = stdev)
   #s5 = rnorm(1, mean = p5, sd = stdev)
   #s6 = rnorm(1, mean = p6, sd = stdev)
-  s7 = rnorm(1, mean = bmi, sd = 3)
+  s7 = rtruncnorm(1, a=5, b=50, mean = bmi, sd = 3)
   co_morbs_list[1] = rbinom(1,1, prob)
   co_morbs_list[2] = rbinom(1,1, p2)
   co_morbs_list[3] = rbinom(1,1, p3)
@@ -2261,6 +2215,7 @@ age_categories = c('Estimate!!Total!!Male!!Under 5 years',
                    'Estimate!!Total!!Female!!75 to 84 years',
                    #'Estimate!!Total!!Female!!80 to 84 years',
                    'Estimate!!Total!!Female!!85 years and over')
+
 sample_co_morb <- function(fn, county, age_list, sex, race, ethnicity){
   output = vector()
   for (i in c(1:length(age_list))) {
@@ -2789,7 +2744,9 @@ simulate_county2 <-function(name) {
         race = race_vec[i]
         county = county_vec[i]
         ethnicity = ethnicity_vec[i]
-        status  = c(compute_comorbidity3(county, age_bin, sex, race, ethnicity), 
+        # status  = c(compute_comorbidity3(county, age_bin, sex, race, ethnicity), 
+        #             compute_special_pop2(county, age_bin, age, sex, race, ethnicity))
+        status  = c(compute_comorbidity2(county, age_bin, sex, race, ethnicity), 
                     compute_special_pop2(county, age_bin, age, sex, race, ethnicity))
       }
       #print(status_df)
@@ -2860,440 +2817,499 @@ final_df = data.frame("ID" = c(),
                       "Heart Disease" = c(),
                       "Heart Failure" = c(),
                       "Hypertension" = c())
+dir.create("../Data/Simulation1226/",recursive = T)
 for (county in counties_in_CA) {
   df = mclapply(county, simulate_county2, mc.cores = numCores)
   print(county)
-  write.csv(df, paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
+  write.csv(df, paste0("../Data/Simulation1226/",county," df.csv"))
   #final_df = rbind(final_df, df)
 }
 
 for (county in counties_in_CA) {
-  df = read.csv(paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
+  df = read.csv(paste0("../Data/Simulation1226/",county," df.csv"))
   final_df = rbind(final_df, df)
 }
-write.csv(final_df, "/Users/poojanshukla/Downloads/counties/All_CA_Counties.csv")
+write.csv(final_df, "../Data/Simulation1226/All_CA_Counties.csv")
 
-start = proc.time()
-Sonoma_df = simulate_county2("Sonoma County, California")
-stop = proc.time() - start
-print(stop)
-
-start = proc.time()
-Sonoma_df = mclapply("Sonoma County, California", simulate_county2, mc.cores = numCores)
-stop = proc.time() - start
-print(stop)
-
-SC_county <- census %>% filter(NAME == 'Santa Clara County, California')
-SC_df = simulate_county("Santa Clara County, California")
-LA_df = simulate_county("Los Angeles County, California")
-Al_df = simulate_county("Alameda County, California")
-Merced_df = simulate_county("Merced County, California")
-Alpine_df = simulate_county("Alpine County, California")
-write.csv(Alpine_df, "/Users/poojanshukla/Downloads/Alpine_county.csv", row.names = TRUE)
-
-SF_df = simulate_county("San Francisco County, California")
-write.csv(SF_df, "/Users/poojanshukla/Downloads/SF_county.csv", row.names = TRUE)
-
-start = proc.time()
-Fresno_df = simulate_county("Fresno County, California")
-stop = proc.time() - start
-print(stop)
-#write.csv(Fresno_df, "/Users/poojanshukla/Downloads/Fresno_county.csv", row.names = TRUE)
-Sonoma_df = 0
-#more parameters that might be useful:
-#healthcare workers total: 	B24114_198 to B24114_257, indexing: c(15133:15192, 15699: 15758, 16265:16324)
-#healthcare workers male: B24115_198 to B24115_257
-#healthcare workers female: B24116_198 to B24116_257
-
-#Nursing facility parameters
-# B26101_130 to B26101_156 for 3 types, indexing: c(22367:22393, 22464:22538, 23254:23280, 23392:23482)
-# B26103_005 to B26103I_005
-# B26201_130 to B26201_156 for 5 types
-# B26203_005 to B26203I_005
-
-#Number of teachers
-# B24114_155 to B24114_161, indexing: c(15090: 15096, 15656: 15662, 16222: 16228 )
-# B24115_155 to B24115_161
-# B24116_155 to B24116_161
-
-#total population in occupied housing units: B25008_001, indexing: c(20106)
-
-#correctional facilities populations: B26101_100 to B26101_129
-#B26103_004 to B26103I_004
-#B26201_100 to B26201_129
-#B26203_004 to B26203I_004
-# indexing: c(22337:22366, 22463:22536, 23224:23253, 23391:23481)
-housing_var <- test$name[c(20106)]
-housing_label1 <- rep(test$label[c(20106)], 1) # 58 counties in CA 
-housing_label2 <- rep(test$concept[c(20106)],1) # 58 counties in CA 
-
-census_housing <- get_acs(geography = "county",
-                     variables =  housing_var,
-                     state = "CA",
-                     year = 2018) # obtain data 
-census_housing <- data.frame(census_housing, label=housing_label1, concept=housing_label2) # label variables 
-
-county_validation <- function(county_name, df, census_data){
-  county_filtered = census_data %>% filter(NAME == county_name)
-  hist(df$Age, xlab = "Age", main = paste(county_name,"Age Distribution in Simulation"), 
-       #breaks = c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100))
-       breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100))
-  
-  
-  age_mids = rep(c(c(4), c(7), c(12), c(16), c(19),
-                     c(22), c(27), c(32), c(40), c(50), c(60),
-                     c(70), c(80), c(90)), 2)
-  i = 1
-  age_data = c()
-  for (elem in age_categories) {
-    tr_county = filter(county_filtered, label == elem, concept != "SEX BY AGE")
-    age_group_total = sum(tr_county$estimate) - tr_county[8,4] - tr_county[9,4]
-    age_data = c(age_data, rep(age_mids[i], age_group_total))
-    i = i+1
-  }
-  hist(age_data, xlab = "Age", main = paste(county_name,"Age Distribution in Real Data"), 
-       #breaks = c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100))
-       breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100))
-  ### Now to make bar plots for race/ethnicity
-  ### Need to calculate number of hispanic/not hispanic for each race.
-  white_hisp_vec <- c(nrow(filter(df, Race == "White", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "White", Ethnicity == "Not Hispanic or Latino")))
-  aa_hisp_vec <- c(nrow(filter(df, Race == "African American", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "African American", Ethnicity == "Not Hispanic or Latino")))
-  
-  asian_hisp_vec <- c(nrow(filter(df, Race == "Asian Alone", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "Asian Alone", Ethnicity == "Not Hispanic or Latino")))
-  
-  AIAN_hisp_vec <- c(nrow(filter(df, Race == "AIAN", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "AIAN", Ethnicity == "Not Hispanic or Latino")))
-  
-  nhpi_hisp_vec <- c(nrow(filter(df, Race == "Native Hawaiian And Other Pacific Islander Alone", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "Native Hawaiian And Other Pacific Islander Alone", Ethnicity == "Not Hispanic or Latino")))
-  
-  other_hisp_vec <- c(nrow(filter(df, Race == "Some other race alone", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "Some other race alone", Ethnicity == "Not Hispanic or Latino")))
-  
-  multi_hisp_vec <- c(nrow(filter(df, Race == "Two or more races", Ethnicity == "Hispanic or Latino")),
-                      nrow(filter(df, Race == "Two or more races", Ethnicity == "Not Hispanic or Latino")))
-  
-  ###Now compute this from the census data
-  true_white_hisp_vec =c(county_filtered[343,4], county_filtered[333,4])
-  true_aa_hisp_vec = c(county_filtered[344,4], county_filtered[334,4])
-  true_AIAN_hisp_vec = c(county_filtered[345,4], county_filtered[335,4])
-  true_asian_hisp_vec = c(county_filtered[346,4], county_filtered[336,4])
-  true_nhpi_hisp_vec = c(county_filtered[347,4], county_filtered[337,4])
-  true_other_hisp_vec = c(county_filtered[348,4], county_filtered[338,4])
-  true_multi_hisp_vec = c(county_filtered[349,4], county_filtered[339,4])
-  
-  white_hisp_final <- c(white_hisp_vec[1], true_white_hisp_vec[1])
-  aa_hisp_final <- c(aa_hisp_vec[1], true_aa_hisp_vec[1])
-  AIAN_hisp_final <- c(AIAN_hisp_vec[1], true_AIAN_hisp_vec[1])
-  asian_hisp_final <- c(asian_hisp_vec[1], true_asian_hisp_vec[1])
-  nhpi_hisp_final <- c(nhpi_hisp_vec[1], true_nhpi_hisp_vec[1])
-  other_hisp_final <- c(other_hisp_vec[1], true_other_hisp_vec[1])
-  multi_hisp_final <- c(multi_hisp_vec[1], true_multi_hisp_vec[1])
-  
-
-  white_not_hisp_final <- c(white_hisp_vec[2], true_white_hisp_vec[2])
-  aa_not_hisp_final <- c(aa_hisp_vec[2], true_aa_hisp_vec[2])
-  AIAN_not_hisp_final <- c(AIAN_hisp_vec[2], true_AIAN_hisp_vec[2])
-  asian_not_hisp_final <- c(asian_hisp_vec[2], true_asian_hisp_vec[2])
-  nhpi_not_hisp_final <- c(nhpi_hisp_vec[2], true_nhpi_hisp_vec[2])
-  other_not_hisp_final <- c(other_hisp_vec[2], true_other_hisp_vec[2])
-  multi_not_hisp_final <- c(multi_hisp_vec[2], true_multi_hisp_vec[2])
-  
-  hisp_df <- cbind(white_hisp_final, aa_hisp_final, AIAN_hisp_final,
-                   asian_hisp_final, nhpi_hisp_final, other_hisp_final, multi_hisp_final)
-  colnames(hisp_df) <- c("WH", "AA", "AIAN", "AS",
-                         "NHPI", "Other","Multi")
-  rownames(hisp_df) <- c("Hispanic or Latino", "Not Hispanic or Latino")
-  
-  not_hisp_df <- cbind(white_not_hisp_final, aa_not_hisp_final, AIAN_not_hisp_final,
-                   asian_not_hisp_final, nhpi_not_hisp_final, other_not_hisp_final, multi_not_hisp_final)
-  colnames(not_hisp_df) <- c("WH", "AA", "AIAN", "AS",
-                         "NHPI", "Other","Multi")
-  rownames(not_hisp_df) <- c("Hispanic or Latino", "Not Hispanic or Latino")
-  
-  
-  barplot(hisp_df,
-          main = paste(county_name, "Number Hispanic by Race, Simulation vs Real Data"),
-          xlab = "Race",
-          col = c("blue","yellow"), beside = TRUE
-  )
-  legend("top",
-         c("Simulated","Census Data"),
-         fill = c("blue","yellow")
-  )
-  barplot(not_hisp_df,
-          main = paste(county_name,"Number Not Hispanic by Race, Simulation vs Real Data"),
-          xlab = "Race",
-          col = c("blue","yellow"), beside = TRUE
-  )
-  legend("top",
-         c("Simulated","Census Data"),
-         fill = c("blue","yellow")
-  )
-  
-  
-  # First distribution
-  hist(df$Age, #breaks= c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100), 
-       breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100),
-       xlim=c(0,110), col=rgb(1,0,0,0.5), xlab="Age", 
-       ylab="Number of People", main=paste(county_name,"Age Distributions of Simulated vs Census Data") )
-  
-  # Second with add=T to plot on top
-  hist(age_data, #breaks= c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100), 
-       breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100),
-       xlim=c(0,110), col=rgb(0,0,1,0.5), add=T)
-  
-  # Add legend
-  legend("topright", legend=c("Simulated","Census Data"), col=c(rgb(1,0,0,0.5), 
-                                                        rgb(0,0,1,0.5)), pt.cex=2, pch=15 )
-}
-county_validation("Los Angeles County, California", LA_df, census)
-for (county_name in all_CA_counties) {
-  x <- simulate_county(county_name)
-  county_validation(county_name, x, census)
-  final_df = rbind(final_df, x)
-}
-
-
-special_populations_validation <- function(county_name, county_df) {
-  # 0 for no special population
-  # 1 for healthcare workers
-  # 2 for incarcerated
-  # 3 for SNF
-  # 4 for educational occupations
-  # 5 for homeless
-  num_hcw = nrow(filter(county_df, colnames(county_df)[10] == 1))
-  num_prisoners = nrow(filter(county_df, colnames(county_df)[10] == 2))
-  num_SNF = nrow(filter(county_df, colnames(county_df)[10] == 3))
-  num_educ = nrow(filter(county_df, colnames(county_df)[10] == 4))
-  num_homeless = nrow(filter(county_df, colnames(county_df)[10] == 5))
-  
-  occ_filtered = filter(census_occ, NAME == county_name)
-  pop_filtered = filter(census, NAME == county_name)
-  num_male_educ = occ_filtered[1,4] * frac_without_archivists
-  num_male_hcw = occ_filtered[2,4] + occ_filtered[5,4]
-  num_female_educ = occ_filtered[6,4] * frac_without_archivists
-  num_female_hcw = occ_filtered[7,4] + occ_filtered[10,4]
-  
-  print(num_hcw -  num_male_hcw -  num_female_hcw)
-  print(num_educ - num_male_educ - num_female_educ)
-  print(num_SNF)
-  print(num_homeless)
-  
-}
-special_populations_validation("Alpine County, California", df)
-
-SC_county <- census %>% filter(NAME == 'Santa Clara County, California')
-SC_df = simulate_county("Santa Clara County, California")
-
-
-age_categories_abbrev = c('Male <5',
-                   'Male 5 to 9',
-                   'Male 10 to 14',
-                   'Male 15 to 17',
-                   'Male 18 and 19',
-                   'Male!!20 to 24',
-                   'Male 25 to 29',
-                   'Male 30 to 34',
-                   'Male 35 to 44',
-                   'Male 45 to 54',
-                   'Male 55 to 64',
-                   'Male 65 to 74',
-                   'Male 75 to 84',
-                   'Male 85+',
-                   'Female <5',
-                   'Female 5 to 9',
-                   'Female 10 to 14',
-                   'Female 15 to 17',
-                   'Female 18 and 19',
-                   'Female!!20 to 24',
-                   'Female 25 to 29',
-                   'Female 30 to 34',
-                   'Female 35 to 44',
-                   'Female 45 to 54',
-                   'Female 55 to 64',
-                   'Female 65 to 74',
-                   'Female 75 to 84',
-                   'Female 85+')
-#test ethnicity assumptions
-age_and_eth_validation <- function(county_name) {
-  county_filtered = filter(census, NAME == county_name)
-  county2 = filter(county_filtered, concept != "SEX BY AGE")
-  age_mids = rep(c(c(4), c(7), c(12), c(16), c(19),
-                   c(22), c(27), c(32), c(40), c(50), c(60),
-                   c(70), c(80), c(90)), 2)
-  hispanic_props = c()
-  for (age in age_categories) {
-    tr_county = filter(county2, label == age)
-    next_prop = tr_county[9,4]/(tr_county[1,4] +tr_county[2,4]+tr_county[3,4]+tr_county[4,4]+tr_county[5,4]+tr_county[6,4]+tr_county[7,4])
-    hispanic_props = c(hispanic_props, next_prop)
-    
-  }
-  barplot(hispanic_props[1:5],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[1:5],
-          col = c("blue")
-  )
-  barplot(hispanic_props[6:10],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[6:10],
-          col = c("blue")
-  )
-  barplot(hispanic_props[11:15],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[11:15],
-          col = c("blue")
-  )
-  barplot(hispanic_props[16:20],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[16:20],
-          col = c("blue")
-  )
-  barplot(hispanic_props[21:25],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[21:25],
-          col = c("blue")
-  )
-  barplot(hispanic_props[26:30],
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev[26:30],
-          col = c("blue")
-  )
-  barplot(hispanic_props,
-          main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
-          xlab = "Age Group",
-          names.arg = age_categories_abbrev,
-          col = c("blue")
-  )
-  
-  return (hispanic_props)
-}
-SF_df =  simulate_county("San Francisco County, California")
-county_validation("Alameda County, California", Al_df, census)
-hispanic_props = age_and_eth_validation("Alameda County, California")
-
-age_ranges = rep(c(c(0,4), c(5,9), c(10,14), c(15,17), c(18,19),
-                   c(20,24), c(25,29), c(30,34), c(35,44), c(45,54), c(55,64),
-                   c(65,74), c(75,84), c(85,100)), 2)
-i = 1
-j = 2
-curr_sex = "Male"
-df_prop_hispanic = c()
-for (elem in age_categories) {
-  if (age_ranges[i] == 0 & i >1) {
-    curr_sex =  "Female"
-  }
-  low = age_ranges[i]
-  high = age_ranges[j]
-  prop_hispanic = nrow(filter(Al_df, Age >= low, Age <= high, Sex == curr_sex, Ethnicity == "Hispanic or Latino"))/nrow(filter(Al_df, Age >= low, Age <= high, Sex == curr_sex))
-  df_prop_hispanic = c(df_prop_hispanic, prop_hispanic)
-  i = i+2
-  j = j+2
-}
-print(hispanic_props)
-print(df_prop_hispanic)
-eth_by_age_df = rbind(hispanic_props,df_prop_hispanic)
-colnames(eth_by_age_df) <- age_categories_abbrev
-rownames(eth_by_age_df) <- c("Census", "Simulated")
-
-barplot(eth_by_age_df,
-        main = paste("Alameda County","Proportion Hispanic by Age, Simulation vs Real Data"),
-        xlab = "Age",
-        col = c("blue","yellow"), beside = TRUE
-)
-legend("top",
-       c("Census","Simulated"),
-       fill = c("blue","yellow"))
-###############################################################################
-#variable names for occupations
-#282 to 
-#C24010_018 1302
-#C24010_017 1301
-#C24010_016 1300
-#C24010_054 1338
-#C24010_053 1337
-#C24010_052 1336
-
-#some add ons
-#C24010_020 Male healthcare support occupations total 26013
-#C24010_014 education, males 26007
-#C24010_050 female education 26043
-#C24010_056 female support healtchare 26049
-
-load_variables2018 <- load_variables(year=2018,dataset="acs1")
-
-var_occ <- test$name[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)] # Extract section of possibly relevant variables 
-var_occ_label1 <- rep(test$label[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)], 58) # 58 counties in CA 
-var_occ_label2 <- rep(test$concept[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)],58) # 58 counties in CA 
-
-census_occ <- get_acs(geography = "county",
-                  variables =  var_occ,
-                  state = "CA",
-                  year = 2018, survey = "acs5") # obtain data 
-census_occ <- data.frame(census_occ, label=var_occ_label1, concept=var_occ_label2) # label variables 
-
-
-#B24010_043 to B24010_051 for teachers, librarians Males, 16119 to 16127      
-#B24010_056 to B24010_063 for healthcare Males, 16132 to 16138
-#B24010_065 to B24010_068 healthcare support Males 16141 to 16144
-#B24010_194 to B24010_202 teachers, librarians, female 16270 to 16278
-#B24010_207 to B24010_214 for healthcare, female 16283 to 16290
-#B24010_216 to B24010_219 for healthcare support, female 16292 to 16295
-
-#B24010A_014 white alone, total education and librarian occupation, male 16393 
-#B24010A_017, B24010A_018 healthcare diagnosing and tech, white alone, male 16396,16397 16398
-#B24010A_020 healtchare support, white alone, male 16399
-#B24010A_050 education, white alone, female 16329
-#B24010A_052 to B24010A_054 white alone, healthcare, female 16431 to 16433
-#B24010A_056 healthcare support, white alone, female 16435
-
-#apply offset of 73 for all subsequent groups
-
-#same as above, but B for african americans
-#C for AIAN
-#D for asian alone
-#E for native hawaiian
-#F for other
-#G for multi
-var_occ_sex_alone = load_variables2018$name[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)]
-var_occ_sex_and_race_1 = c(16393,16396,16397,16398,16399,16329,16431:16433,16435)
-
-var_occ_sex_and_race = c(var_occ_sex_and_race_1, var_occ_sex_and_race_1+73) #white, african american
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+2*73) #AIAN
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+3*73) #asian
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+4*73) #native hawaiian
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+5*73) #other
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+6*73) #multi
-var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+8*73) #hispanic or latino
-
-var_occ_sex_and_race_names = load_variables2018$name[var_occ_sex_and_race]
-
-var_occ_sex_alone_l1 <- rep(load_variables2018$label[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)], 40) # 58 counties in CA 
-var_occ_sex_alone_l2 <- rep(load_variables2018$concept[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)],40) # 58 counties in CA 
-
-var_occ_sex_and_race_l1 <- rep(load_variables2018$label[var_occ_sex_and_race], 40) # 58 counties in CA 
-var_occ_sex_and_race_l2 <- rep(load_variables2018$concept[var_occ_sex_and_race],40) # 58 counties in CA 
-
-
-census_occ_sex_alone <- get_acs(geography = "state",
-                      variables =  var_occ_sex_alone,
-                      state = "CA",
-                      year = 2018, survey = "acs1") # obtain data 
-census_occ_sex_alone <- data.frame(census_occ_sex_alone, label=var_occ_sex_alone_l1, concept=var_occ_sex_alone_l2) # label variables 
-
-census_occ_sex_and_race <- get_acs(geography = "state",
-                                variables =  var_occ_sex_and_race_names,
-                                state = "CA",
-                                year = 2018, survey = "acs1") # obtain data 
-census_occ_sex_and_race <- data.frame(census_occ_sex_and_race, label=var_occ_sex_and_race_l1, concept=var_occ_sex_and_race_l2) # label variables 
-
-
+# start = proc.time()
+# Sonoma_df = simulate_county2("Sonoma County, California")
+# stop = proc.time() - start
+# print(stop)
+# 
+# start = proc.time()
+# Sonoma_df = mclapply("Sonoma County, California", simulate_county2, mc.cores = numCores)
+# stop = proc.time() - start
+# print(stop)
+# 
+# SC_county <- census %>% filter(NAME == 'Santa Clara County, California')
+# SC_df = simulate_county("Santa Clara County, California")
+# LA_df = simulate_county("Los Angeles County, California")
+# Al_df = simulate_county("Alameda County, California")
+# Merced_df = simulate_county("Merced County, California")
+# Alpine_df = simulate_county("Alpine County, California")
+# write.csv(Alpine_df, "/Users/poojanshukla/Downloads/Alpine_county.csv", row.names = TRUE)
+# 
+# SF_df = simulate_county("San Francisco County, California")
+# write.csv(SF_df, "/Users/poojanshukla/Downloads/SF_county.csv", row.names = TRUE)
+# 
+# start = proc.time()
+# Fresno_df = simulate_county("Fresno County, California")
+# stop = proc.time() - start
+# print(stop)
+# #write.csv(Fresno_df, "/Users/poojanshukla/Downloads/Fresno_county.csv", row.names = TRUE)
+# Sonoma_df = 0
+# #more parameters that might be useful:
+# #healthcare workers total: 	B24114_198 to B24114_257, indexing: c(15133:15192, 15699: 15758, 16265:16324)
+# #healthcare workers male: B24115_198 to B24115_257
+# #healthcare workers female: B24116_198 to B24116_257
+# 
+# #Nursing facility parameters
+# # B26101_130 to B26101_156 for 3 types, indexing: c(22367:22393, 22464:22538, 23254:23280, 23392:23482)
+# # B26103_005 to B26103I_005
+# # B26201_130 to B26201_156 for 5 types
+# # B26203_005 to B26203I_005
+# 
+# #Number of teachers
+# # B24114_155 to B24114_161, indexing: c(15090: 15096, 15656: 15662, 16222: 16228 )
+# # B24115_155 to B24115_161
+# # B24116_155 to B24116_161
+# 
+# #total population in occupied housing units: B25008_001, indexing: c(20106)
+# 
+# #correctional facilities populations: B26101_100 to B26101_129
+# #B26103_004 to B26103I_004
+# #B26201_100 to B26201_129
+# #B26203_004 to B26203I_004
+# # indexing: c(22337:22366, 22463:22536, 23224:23253, 23391:23481)
+# housing_var <- test$name[c(20106)]
+# housing_label1 <- rep(test$label[c(20106)], 1) # 58 counties in CA 
+# housing_label2 <- rep(test$concept[c(20106)],1) # 58 counties in CA 
+# 
+# census_housing <- get_acs(geography = "county",
+#                      variables =  housing_var,
+#                      state = "CA",
+#                      year = 2018) # obtain data 
+# census_housing <- data.frame(census_housing, label=housing_label1, concept=housing_label2) # label variables 
+# 
+# county_validation <- function(county_name, df, census_data){
+#   county_filtered = census_data %>% filter(NAME == county_name)
+#   hist(df$Age, xlab = "Age", main = paste(county_name,"Age Distribution in Simulation"), 
+#        #breaks = c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100))
+#        breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100))
+#   
+#   
+#   age_mids = rep(c(c(4), c(7), c(12), c(16), c(19),
+#                      c(22), c(27), c(32), c(40), c(50), c(60),
+#                      c(70), c(80), c(90)), 2)
+#   i = 1
+#   age_data = c()
+#   for (elem in age_categories) {
+#     tr_county = filter(county_filtered, label == elem, concept != "SEX BY AGE")
+#     age_group_total = sum(tr_county$estimate) - tr_county[8,4] - tr_county[9,4]
+#     age_data = c(age_data, rep(age_mids[i], age_group_total))
+#     i = i+1
+#   }
+#   hist(age_data, xlab = "Age", main = paste(county_name,"Age Distribution in Real Data"), 
+#        #breaks = c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100))
+#        breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100))
+#   ### Now to make bar plots for race/ethnicity
+#   ### Need to calculate number of hispanic/not hispanic for each race.
+#   white_hisp_vec <- c(nrow(filter(df, Race == "White", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "White", Ethnicity == "Not Hispanic or Latino")))
+#   aa_hisp_vec <- c(nrow(filter(df, Race == "African American", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "African American", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   asian_hisp_vec <- c(nrow(filter(df, Race == "Asian Alone", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "Asian Alone", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   AIAN_hisp_vec <- c(nrow(filter(df, Race == "AIAN", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "AIAN", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   nhpi_hisp_vec <- c(nrow(filter(df, Race == "Native Hawaiian And Other Pacific Islander Alone", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "Native Hawaiian And Other Pacific Islander Alone", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   other_hisp_vec <- c(nrow(filter(df, Race == "Some other race alone", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "Some other race alone", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   multi_hisp_vec <- c(nrow(filter(df, Race == "Two or more races", Ethnicity == "Hispanic or Latino")),
+#                       nrow(filter(df, Race == "Two or more races", Ethnicity == "Not Hispanic or Latino")))
+#   
+#   ###Now compute this from the census data
+#   true_white_hisp_vec =c(county_filtered[343,4], county_filtered[333,4])
+#   true_aa_hisp_vec = c(county_filtered[344,4], county_filtered[334,4])
+#   true_AIAN_hisp_vec = c(county_filtered[345,4], county_filtered[335,4])
+#   true_asian_hisp_vec = c(county_filtered[346,4], county_filtered[336,4])
+#   true_nhpi_hisp_vec = c(county_filtered[347,4], county_filtered[337,4])
+#   true_other_hisp_vec = c(county_filtered[348,4], county_filtered[338,4])
+#   true_multi_hisp_vec = c(county_filtered[349,4], county_filtered[339,4])
+#   
+#   white_hisp_final <- c(white_hisp_vec[1], true_white_hisp_vec[1])
+#   aa_hisp_final <- c(aa_hisp_vec[1], true_aa_hisp_vec[1])
+#   AIAN_hisp_final <- c(AIAN_hisp_vec[1], true_AIAN_hisp_vec[1])
+#   asian_hisp_final <- c(asian_hisp_vec[1], true_asian_hisp_vec[1])
+#   nhpi_hisp_final <- c(nhpi_hisp_vec[1], true_nhpi_hisp_vec[1])
+#   other_hisp_final <- c(other_hisp_vec[1], true_other_hisp_vec[1])
+#   multi_hisp_final <- c(multi_hisp_vec[1], true_multi_hisp_vec[1])
+#   
+# 
+#   white_not_hisp_final <- c(white_hisp_vec[2], true_white_hisp_vec[2])
+#   aa_not_hisp_final <- c(aa_hisp_vec[2], true_aa_hisp_vec[2])
+#   AIAN_not_hisp_final <- c(AIAN_hisp_vec[2], true_AIAN_hisp_vec[2])
+#   asian_not_hisp_final <- c(asian_hisp_vec[2], true_asian_hisp_vec[2])
+#   nhpi_not_hisp_final <- c(nhpi_hisp_vec[2], true_nhpi_hisp_vec[2])
+#   other_not_hisp_final <- c(other_hisp_vec[2], true_other_hisp_vec[2])
+#   multi_not_hisp_final <- c(multi_hisp_vec[2], true_multi_hisp_vec[2])
+#   
+#   hisp_df <- cbind(white_hisp_final, aa_hisp_final, AIAN_hisp_final,
+#                    asian_hisp_final, nhpi_hisp_final, other_hisp_final, multi_hisp_final)
+#   colnames(hisp_df) <- c("WH", "AA", "AIAN", "AS",
+#                          "NHPI", "Other","Multi")
+#   rownames(hisp_df) <- c("Hispanic or Latino", "Not Hispanic or Latino")
+#   
+#   not_hisp_df <- cbind(white_not_hisp_final, aa_not_hisp_final, AIAN_not_hisp_final,
+#                    asian_not_hisp_final, nhpi_not_hisp_final, other_not_hisp_final, multi_not_hisp_final)
+#   colnames(not_hisp_df) <- c("WH", "AA", "AIAN", "AS",
+#                          "NHPI", "Other","Multi")
+#   rownames(not_hisp_df) <- c("Hispanic or Latino", "Not Hispanic or Latino")
+#   
+#   
+#   barplot(hisp_df,
+#           main = paste(county_name, "Number Hispanic by Race, Simulation vs Real Data"),
+#           xlab = "Race",
+#           col = c("blue","yellow"), beside = TRUE
+#   )
+#   legend("top",
+#          c("Simulated","Census Data"),
+#          fill = c("blue","yellow")
+#   )
+#   barplot(not_hisp_df,
+#           main = paste(county_name,"Number Not Hispanic by Race, Simulation vs Real Data"),
+#           xlab = "Race",
+#           col = c("blue","yellow"), beside = TRUE
+#   )
+#   legend("top",
+#          c("Simulated","Census Data"),
+#          fill = c("blue","yellow")
+#   )
+#   
+#   
+#   # First distribution
+#   hist(df$Age, #breaks= c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100), 
+#        breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100),
+#        xlim=c(0,110), col=rgb(1,0,0,0.5), xlab="Age", 
+#        ylab="Number of People", main=paste(county_name,"Age Distributions of Simulated vs Census Data") )
+#   
+#   # Second with add=T to plot on top
+#   hist(age_data, #breaks= c(0,5,10,15,18,20,25,30,35,45,55,65,75,85,100), 
+#        breaks = c(0,4,9,14,17,19,24,29,34,44,54,64,74,84,100),
+#        xlim=c(0,110), col=rgb(0,0,1,0.5), add=T)
+#   
+#   # Add legend
+#   legend("topright", legend=c("Simulated","Census Data"), col=c(rgb(1,0,0,0.5), 
+#                                                         rgb(0,0,1,0.5)), pt.cex=2, pch=15 )
+# }
+# county_validation("Los Angeles County, California", LA_df, census)
+# for (county_name in all_CA_counties) {
+#   x <- simulate_county(county_name)
+#   county_validation(county_name, x, census)
+#   final_df = rbind(final_df, x)
+# }
+# 
+# 
+# special_populations_validation <- function(county_name, county_df) {
+#   # 0 for no special population
+#   # 1 for healthcare workers
+#   # 2 for incarcerated
+#   # 3 for SNF
+#   # 4 for educational occupations
+#   # 5 for homeless
+#   num_hcw = nrow(filter(county_df, colnames(county_df)[10] == 1))
+#   num_prisoners = nrow(filter(county_df, colnames(county_df)[10] == 2))
+#   num_SNF = nrow(filter(county_df, colnames(county_df)[10] == 3))
+#   num_educ = nrow(filter(county_df, colnames(county_df)[10] == 4))
+#   num_homeless = nrow(filter(county_df, colnames(county_df)[10] == 5))
+#   
+#   occ_filtered = filter(census_occ, NAME == county_name)
+#   pop_filtered = filter(census, NAME == county_name)
+#   num_male_educ = occ_filtered[1,4] * frac_without_archivists
+#   num_male_hcw = occ_filtered[2,4] + occ_filtered[5,4]
+#   num_female_educ = occ_filtered[6,4] * frac_without_archivists
+#   num_female_hcw = occ_filtered[7,4] + occ_filtered[10,4]
+#   
+#   print(num_hcw -  num_male_hcw -  num_female_hcw)
+#   print(num_educ - num_male_educ - num_female_educ)
+#   print(num_SNF)
+#   print(num_homeless)
+#   
+# }
+# special_populations_validation("Alpine County, California", df)
+# 
+# SC_county <- census %>% filter(NAME == 'Santa Clara County, California')
+# SC_df = simulate_county("Santa Clara County, California")
+# 
+# 
+# age_categories_abbrev = c('Male <5',
+#                    'Male 5 to 9',
+#                    'Male 10 to 14',
+#                    'Male 15 to 17',
+#                    'Male 18 and 19',
+#                    'Male!!20 to 24',
+#                    'Male 25 to 29',
+#                    'Male 30 to 34',
+#                    'Male 35 to 44',
+#                    'Male 45 to 54',
+#                    'Male 55 to 64',
+#                    'Male 65 to 74',
+#                    'Male 75 to 84',
+#                    'Male 85+',
+#                    'Female <5',
+#                    'Female 5 to 9',
+#                    'Female 10 to 14',
+#                    'Female 15 to 17',
+#                    'Female 18 and 19',
+#                    'Female!!20 to 24',
+#                    'Female 25 to 29',
+#                    'Female 30 to 34',
+#                    'Female 35 to 44',
+#                    'Female 45 to 54',
+#                    'Female 55 to 64',
+#                    'Female 65 to 74',
+#                    'Female 75 to 84',
+#                    'Female 85+')
+# #test ethnicity assumptions
+# age_and_eth_validation <- function(county_name) {
+#   county_filtered = filter(census, NAME == county_name)
+#   county2 = filter(county_filtered, concept != "SEX BY AGE")
+#   age_mids = rep(c(c(4), c(7), c(12), c(16), c(19),
+#                    c(22), c(27), c(32), c(40), c(50), c(60),
+#                    c(70), c(80), c(90)), 2)
+#   hispanic_props = c()
+#   for (age in age_categories) {
+#     tr_county = filter(county2, label == age)
+#     next_prop = tr_county[9,4]/(tr_county[1,4] +tr_county[2,4]+tr_county[3,4]+tr_county[4,4]+tr_county[5,4]+tr_county[6,4]+tr_county[7,4])
+#     hispanic_props = c(hispanic_props, next_prop)
+#     
+#   }
+#   barplot(hispanic_props[1:5],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[1:5],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props[6:10],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[6:10],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props[11:15],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[11:15],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props[16:20],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[16:20],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props[21:25],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[21:25],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props[26:30],
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev[26:30],
+#           col = c("blue")
+#   )
+#   barplot(hispanic_props,
+#           main = paste(county_name, "Proportion Hispanic by Age, Real Data"),
+#           xlab = "Age Group",
+#           names.arg = age_categories_abbrev,
+#           col = c("blue")
+#   )
+#   
+#   return (hispanic_props)
+# }
+# SF_df =  simulate_county("San Francisco County, California")
+# county_validation("Alameda County, California", Al_df, census)
+# hispanic_props = age_and_eth_validation("Alameda County, California")
+# 
+# age_ranges = rep(c(c(0,4), c(5,9), c(10,14), c(15,17), c(18,19),
+#                    c(20,24), c(25,29), c(30,34), c(35,44), c(45,54), c(55,64),
+#                    c(65,74), c(75,84), c(85,100)), 2)
+# i = 1
+# j = 2
+# curr_sex = "Male"
+# df_prop_hispanic = c()
+# for (elem in age_categories) {
+#   if (age_ranges[i] == 0 & i >1) {
+#     curr_sex =  "Female"
+#   }
+#   low = age_ranges[i]
+#   high = age_ranges[j]
+#   prop_hispanic = nrow(filter(Al_df, Age >= low, Age <= high, Sex == curr_sex, Ethnicity == "Hispanic or Latino"))/nrow(filter(Al_df, Age >= low, Age <= high, Sex == curr_sex))
+#   df_prop_hispanic = c(df_prop_hispanic, prop_hispanic)
+#   i = i+2
+#   j = j+2
+# }
+# print(hispanic_props)
+# print(df_prop_hispanic)
+# eth_by_age_df = rbind(hispanic_props,df_prop_hispanic)
+# colnames(eth_by_age_df) <- age_categories_abbrev
+# rownames(eth_by_age_df) <- c("Census", "Simulated")
+# 
+# barplot(eth_by_age_df,
+#         main = paste("Alameda County","Proportion Hispanic by Age, Simulation vs Real Data"),
+#         xlab = "Age",
+#         col = c("blue","yellow"), beside = TRUE
+# )
+# legend("top",
+#        c("Census","Simulated"),
+#        fill = c("blue","yellow"))
+# 
+# essential_workers_validation("Yuba County, California", Yuba_df)
+# ALF_validation("Yuba County, California", Yuba_df)
+# 
+# essential_workers_validation("Sonoma County, California", Sonoma_df)
+# ALF_validation("Sonoma County, California", Sonoma_df)
+# 
+# Alpine_comp_df = chis_data_validation("Alpine County, California", Alpine_df)
+# Yuba_comp_df = chis_data_validation("Yuba County, California", Yuba_df)
+# chis_data_validation("Merced County, California", Merced_df)
+# 
+# special_populations_validation("Yuba County, California", Yuba_df)
+# special_populations_validation("Sonoma County, California", Sonoma_df)
+# 
+# 
+# 
+# special_populations_validation("Yuba County, California", Yuba_df)
+# 
+# Yuba_df = simulate_county2("Yuba County, California")
+# Merced_df = simulate_county2("Merced County, California")
+# Alpine_df = simulate_county2("Alpine County, California")
+# Sonoma_df = simulate_county2("Sonoma County, California")
+# #SF_df = simulate_county2("San Francisco County, California")
+# # SF_df = read.csv("sf_df.csv")
+# San_Bern_df = simulate_county2("San Bernardino County, California")
+# 
+# 
+# # SF_homeless = filter(SF_df, Special.Population == 5)
+# # SF_homeless_expected_total = 8035
+# # SF_homeless_simulated = nrow(SF_homeless)
+# # frac_african_american = nrow(filter(SF_homeless, Race == "African American"))/SF_homeless_simulated
+# # frac_white = nrow(filter(SF_homeless, Race == "White"))/SF_homeless_simulated
+# # frac_asian = nrow(filter(SF_homeless, Race == "Asian Alone"))/SF_homeless_simulated
+# # frac_AIAN = nrow(filter(SF_homeless, Race == "AIAN"))/SF_homeless_simulated
+# # frac_other = nrow(filter(SF_homeless, Race == "Some other race alone"))/SF_homeless_simulated
+# 
+# for (county in counties_in_CA) {
+#   df = mclapply(county, simulate_county2, mc.cores = numCores)
+#   print(county)
+#   write.csv(df, paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
+#   #final_df = rbind(final_df, df)
+# }
+# 
+# for (county in counties_in_CA) {
+#   df = read.csv(paste("/Users/poojanshukla/Downloads/counties/", paste(county, "df.csv")))
+#   final_df = rbind(final_df, df)
+# }
+# write.csv(final_df, "/Users/poojanshukla/Downloads/counties/All_CA_Counties.csv")
+# #pops = c()
+# #for (county in counties_in_CA) {
+# #  pop = filter(census, NAME == county)[3,4]
+# #  pops = c(pops, pop)
+# #}
+# #
+# #cnty_totals = data.frame("County" = counties_in_CA, "Pop Total" = pops)
+# #write.csv(cnty_totals,"county_totals.csv")
+# 
+# 
+# ###############################################################################
+# #variable names for occupations
+# #282 to 
+# #C24010_018 1302
+# #C24010_017 1301
+# #C24010_016 1300
+# #C24010_054 1338
+# #C24010_053 1337
+# #C24010_052 1336
+# 
+# #some add ons
+# #C24010_020 Male healthcare support occupations total 26013
+# #C24010_014 education, males 26007
+# #C24010_050 female education 26043
+# #C24010_056 female support healtchare 26049
+# 
+# load_variables2018 <- load_variables(year=2018,dataset="acs1")
+# 
+# var_occ <- test$name[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)] # Extract section of possibly relevant variables 
+# var_occ_label1 <- rep(test$label[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)], 58) # 58 counties in CA 
+# var_occ_label2 <- rep(test$concept[c(26007,26009,26010,26011,26013,26043,26045,26046,26047, 26049)],58) # 58 counties in CA 
+# 
+# census_occ <- get_acs(geography = "county",
+#                   variables =  var_occ,
+#                   state = "CA",
+#                   year = 2018, survey = "acs5") # obtain data 
+# census_occ <- data.frame(census_occ, label=var_occ_label1, concept=var_occ_label2) # label variables 
+# 
+# 
+# #B24010_043 to B24010_051 for teachers, librarians Males, 16119 to 16127      
+# #B24010_056 to B24010_063 for healthcare Males, 16132 to 16138
+# #B24010_065 to B24010_068 healthcare support Males 16141 to 16144
+# #B24010_194 to B24010_202 teachers, librarians, female 16270 to 16278
+# #B24010_207 to B24010_214 for healthcare, female 16283 to 16290
+# #B24010_216 to B24010_219 for healthcare support, female 16292 to 16295
+# 
+# #B24010A_014 white alone, total education and librarian occupation, male 16393 
+# #B24010A_017, B24010A_018 healthcare diagnosing and tech, white alone, male 16396,16397 16398
+# #B24010A_020 healtchare support, white alone, male 16399
+# #B24010A_050 education, white alone, female 16329
+# #B24010A_052 to B24010A_054 white alone, healthcare, female 16431 to 16433
+# #B24010A_056 healthcare support, white alone, female 16435
+# 
+# #apply offset of 73 for all subsequent groups
+# 
+# #same as above, but B for african americans
+# #C for AIAN
+# #D for asian alone
+# #E for native hawaiian
+# #F for other
+# #G for multi
+# var_occ_sex_alone = load_variables2018$name[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)]
+# var_occ_sex_and_race_1 = c(16393,16396,16397,16398,16399,16329,16431:16433,16435)
+# 
+# var_occ_sex_and_race = c(var_occ_sex_and_race_1, var_occ_sex_and_race_1+73) #white, african american
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+2*73) #AIAN
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+3*73) #asian
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+4*73) #native hawaiian
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+5*73) #other
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+6*73) #multi
+# var_occ_sex_and_race = c(var_occ_sex_and_race, var_occ_sex_and_race_1+8*73) #hispanic or latino
+# 
+# var_occ_sex_and_race_names = load_variables2018$name[var_occ_sex_and_race]
+# 
+# var_occ_sex_alone_l1 <- rep(load_variables2018$label[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)], 40) # 58 counties in CA 
+# var_occ_sex_alone_l2 <- rep(load_variables2018$concept[c(16119:16127,16132:16138,16141:16144,16270:16278,16283:16290,16292:16295)],40) # 58 counties in CA 
+# 
+# var_occ_sex_and_race_l1 <- rep(load_variables2018$label[var_occ_sex_and_race], 40) # 58 counties in CA 
+# var_occ_sex_and_race_l2 <- rep(load_variables2018$concept[var_occ_sex_and_race],40) # 58 counties in CA 
+# 
+# 
+# census_occ_sex_alone <- get_acs(geography = "state",
+#                       variables =  var_occ_sex_alone,
+#                       state = "CA",
+#                       year = 2018, survey = "acs1") # obtain data 
+# census_occ_sex_alone <- data.frame(census_occ_sex_alone, label=var_occ_sex_alone_l1, concept=var_occ_sex_alone_l2) # label variables 
+# 
+# census_occ_sex_and_race <- get_acs(geography = "state",
+#                                 variables =  var_occ_sex_and_race_names,
+#                                 state = "CA",
+#                                 year = 2018, survey = "acs1") # obtain data 
+# census_occ_sex_and_race <- data.frame(census_occ_sex_and_race, label=var_occ_sex_and_race_l1, concept=var_occ_sex_and_race_l2) # label variables 
+# 
+# 
