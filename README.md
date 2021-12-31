@@ -28,6 +28,8 @@ This repository contains code and data for the analyses in 'Comparison of COVID-
   * ggplot2
   * RColorBrewer
   * viridis
+  * cowplot
+  * patchwork
 
 ## Data
 
@@ -46,7 +48,7 @@ Download the simulated population data from [here](https://doi.org/10.5281/zenod
 Install the required R packages if they are not already installed by running the following line of code in R
 
 ```R
-> install.packages(c("triangle","dplyr","tidycensus","acs","censusapi","devtools","foreach","doParallel","readxl","truncnorm","lubridate","reshape2","data.table","matrixStats","abind","broom","sf","ggplot2","RColorBrewer","viridis"))
+install.packages(c("triangle","dplyr","tidycensus","acs","censusapi","devtools","foreach","doParallel","readxl","truncnorm","lubridate","reshape2","data.table","matrixStats","abind","broom","sf","ggplot2","RColorBrewer","viridis","cowplot","patchwork"))
 ```
 
 The 'hashmap' package used in [simulate_all_CA_counties.R](Code/simulate_all_CA_counties.R) is no longer available on CRAN, so is automatically installed from GitHub in the code if it is not already installed.
@@ -54,20 +56,20 @@ The 'hashmap' package used in [simulate_all_CA_counties.R](Code/simulate_all_CA_
 The vaccine prioritization simulations can then be run in R by entering
 
 ```R
-> setwd("<path>/<to>/Code/")
-> source("run_vaccine_impact_prediction_death_IFR_model.R")
+setwd("<path>/<to>/Code/")
+source("run_vaccine_impact_prediction_death_IFR_model.R")
 ```
 
 at the command prompt, where `<path>/<to>` is the path to the [Code](Code) subfolder on your machine, or by navigating to the [Code](Code) subfolder in the downloaded repository in a terminal window on Mac/Linux and entering
 
 ```
-% Rscript run_vaccine_impact_prediction_death_IFR.R
+Rscript run_vaccine_impact_prediction_death_IFR.R
 ```
  
 or in Windows command line by entering
 
 ```
-C:\>"C:\<path>\<to>\Rscript.exe" C:<path>\<to>\run_vaccine_impact_prediction_death_IFR_model.R
+"C:\<path>\<to>\Rscript.exe" C:<path>\<to>\run_vaccine_impact_prediction_death_IFR_model.R
 ```
 
 where `<path>\<to>` represents the paths to Rscript.exe and 'run_vaccine_prediction_death_IFR_model.R' on your machine.
@@ -78,7 +80,7 @@ where `<path>\<to>` represents the paths to Rscript.exe and 'run_vaccine_predict
 
 ## Authors
 
-* Lloyd Chapman: <lloyd.chapman@ucsf.edu>
+* Lloyd Chapman: <lloyd.chapman1@lshtm.ac.uk>
 * Poojan Shukla: <pshukla@berkeley.edu>
 
 ## License
