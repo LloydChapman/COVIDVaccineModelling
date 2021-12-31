@@ -414,9 +414,20 @@ calc_DALYs_from_deaths <- function(death,LE,d,w){
   return(DALYs)
 }
 
+calc_QALYs_from_deaths <- function(death,LE,age_mid,Q_a){
+  E <- mapply(function(x,y) sum(Q_a[(x+1):(x+round(y)+1)]),age_mid,LE) # add 1 to index as ages in Q_a start from 0
+  QALYs <- death * E
+  return(QALYs)
+}
+
 calc_DALYs_from_infections_and_cases <- function(infection,case,d,w){
   DALYs <- ((infection - case) * d[1] * w[1] + case * d[2] * w[2])/365
   return(DALYs)
+}
+
+calc_QALYs_from_infections_and_cases <- function(infection,case,u){
+  QALYs <- (0.07*(infection - case) + case)*u
+  return(QALYs)
 }
 
 simulate_cases_hosps_deaths <- function(df,v_e,t_sim,r,cases_ratio,deaths_ratio,n_sim,p_mi,d,w){
@@ -499,7 +510,7 @@ simulate_deaths <- function(df,v_e,t_sim,r,deaths_ratio,n_sim,d,w){
   return(out)
 }
 
-simulate_deaths2 <- function(df,v_e,t_sim,r,deaths_ratio,d,w){
+simulate_deaths2 <- function(df,v_e,t_sim,r,deaths_ratio,d,w,Q_a){
   # Total number of risk groups
   n_grp <- nrow(df)
   
@@ -508,33 +519,36 @@ simulate_deaths2 <- function(df,v_e,t_sim,r,deaths_ratio,d,w){
   log_lambda <- rtruncnorm(n_grp,a = df$log_lambda_LB,b = df$log_lambda_UB,mean = df$log_lambda,sd = df$se_log_lambda)
   lambda <- exp(log_lambda)
   RR <- rtruncnorm(n_grp,a = df$RR_LB - 1e-15,b = df$RR_UB + 1e-15,mean = df$RR,sd = df$se_RR)
-  if (r!=1){
-    p_death <- 1 - exp(-lambda*r*(1-r^t_sim)/(1-r) * RR * deaths_ratio)
-    p_death_v <- (1 - exp(-(1-v_e)*lambda*r*(1-r^t_sim)/(1-r) * RR * deaths_ratio))    
-  } else {
-    p_death <- 1 - exp(-lambda*t_sim * RR * deaths_ratio)
-    p_death_v <- (1 - exp(-(1-v_e)*lambda*t_sim * RR * deaths_ratio))    
-  }
-  
+  p_death <- 1 - exp(-lambda*t_sim * RR * deaths_ratio)
+  p_death_v <- (1 - exp(-lambda*(t_sim-v_e/r*(1-exp(-r*t_sim))) * RR * deaths_ratio))
+  p_death_i <- (1 - exp(-lambda*(t_sim-v_e/r*(1-exp(-r*t_sim))) * RR * deaths_ratio))
+    
   ## No vaccination
   # Simulate past infections
   past_inf <- rbinom(n_grp,pop,p_past_inf)
   
   # Simulate new deaths
   death <- rbinom(n_grp,pop-past_inf,p_death)
+  death_i <- rbinom(n_grp,past_inf,p_death_i)
   
   # Calculate DALYs from deaths
-  DALYs <- calc_DALYs_from_deaths(death,df$life_expectancy,d,w)
+  DALYs <- calc_DALYs_from_deaths(death+death_i,df$life_expectancy,d,w)
+  
+  # Calculate QALYs lost from deaths
+  QALYs <- calc_QALYs_from_deaths(death+death_i,df$life_expectancy,age_mid,Q_a)
   
   ## Vaccination
   # Simulate new deaths
   death_v <- rbinom(n_grp,pop-past_inf,p_death_v)
   
   # Calculate DALYs from deaths
-  DALYs_v <- calc_DALYs_from_deaths(death_v,df$life_expectancy,d,w)
+  DALYs_v <- calc_DALYs_from_deaths(death_v+death_i,df$life_expectancy,d,w)
+  
+  # Calculate QALYs lost from deaths
+  QALYs_v <- calc_QALYs_from_deaths(death_v+death_i,df$life_expectancy,age_mid,Q_a)
   
   # Bind into output array
-  out <- cbind(past_inf,death,DALYs,death_v,DALYs_v)
+  out <- cbind(past_inf,death,DALYs,QALYs,death_v,DALYs_v,QALYs_v,death_i)
   
   return(out)
 }
@@ -618,21 +632,37 @@ process_predictions_deaths <- function(out,grp,n_sim,risk_grp_dt,IFR_long,IFR_ra
   return(agg_out)
 }
 
-process_predictions_deaths2 <- function(out,grp,agg_df,IFR_ratio,d,w,frlty_idx){
+process_predictions_deaths2 <- function(out,grp,agg_df,v_e,v_ei,v_ec,r,r_i,t_sim,IFR_ratio,frlty_idx,d,w,u){
   out <- cbind(grp,out)
   
   # Merge county, age, sex and race/ethnicity information from synthetic population data frame and add risk group populations
-  out <- merge(agg_df[,.(county_res,age_cat,sex,race_ethnicity,special.population,asthma,diabetes,heart.disease,heart.failure,hypertension,obesity,smoker,population,median_perc,p_clin,grp,risk_grp)],out,by="grp")
+  out <- merge(agg_df[,.(county_res,age_cat,sex,race_ethnicity,special.population,
+                         asthma,diabetes,heart.disease,heart.failure,hypertension,obesity,smoker,
+                         population,IFR=median_perc/100,p_clin,grp,risk_grp)],out,by="grp")
+  
+  # Calculate average vaccine efficacies against death and infection
+  v_e_mean = v_e*(1-exp(-r*t_sim))/(r*t_sim)
+  v_ei_mean = v_ei*(1-exp(-r_i*t_sim))/(r_i*t_sim)
+  v_ec_mean = v_ec*(1-exp(-r_i*t_sim))/(r_i*t_sim)
   
   # Backcalculate infections in each risk group using O'Driscoll IFR
-  out[,`:=`(infection=death/(median_perc/100*IFR_ratio),infection_v=death_v/(median_perc/100*IFR_ratio))]
-  out[special.population %in% c(3,8),`:=`(infection=infection/frlty_idx,infection_v=infection_v/frlty_idx)]
+  out[,`:=`(infection=death/(IFR*IFR_ratio),
+            infection_v=death_v/((1-v_e_mean)/(1-v_ei_mean)*IFR*IFR_ratio),
+            infection_i=death_i/((1-v_e_mean)/(1-v_ei_mean)*IFR*IFR_ratio))]
+  out[special.population %in% c(3,8),`:=`(infection=infection/frlty_idx,
+                                          infection_v=infection_v/frlty_idx,
+                                          infection_i=infection_i/frlty_idx)]
   
   # Calculate clinical cases from infections using Davies age-dependent clinical fraction
-  out[,`:=`(case=infection*p_clin,case_v=infection_v*p_clin)]
+  out[,`:=`(case=infection*p_clin,
+            case_v=(1-v_ec_mean)/(1-v_ei_mean)*infection_v*p_clin,
+            case_i=(1-v_ec_mean)/(1-v_ei_mean)*infection_i*p_clin)]
   
   # Calculate and add DALYs from infections and cases
-  out[,`:=`(DALYs = DALYs + calc_DALYs_from_infections_and_cases(infection,case,d,w),DALYs_v = DALYs_v + calc_DALYs_from_infections_and_cases(infection_v,case_v,d,w))]
+  out[,`:=`(DALYs = DALYs + calc_DALYs_from_infections_and_cases(infection+infection_i,case+case_i,d,w),
+            DALYs_v = DALYs_v + calc_DALYs_from_infections_and_cases(infection_v+infection_i,case_v+case_i,d,w),
+            QALYs = QALYs + calc_QALYs_from_infections_and_cases(infection+infection_i,case+case_i,u),
+            QALYs_v = QALYs_v + calc_QALYs_from_infections_and_cases(infection_v+infection_i,case_v+case_i,u))]
   
   # Calculate infections, cases, deaths and DALYs averted
   out <- calc_infections_cases_deaths_DALYs_averted(out)
@@ -683,11 +713,19 @@ calc_cases_deaths_DALYs_averted <- function(x){
 }
 
 calc_infections_cases_deaths_DALYs_averted <- function(x){
-  # Calculate infections, cases, deaths and DALYs averted
-  x[,`:=`(deaths_averted = death - death_v,DALYs_averted = DALYs - DALYs_v,infections_averted = infection - infection_v,cases_averted = case - case_v)]
+  # Calculate infections, cases, deaths, DALYs, and QALYs averted
+  x[,`:=`(deaths_averted = death - death_v,
+          DALYs_averted = DALYs - DALYs_v,
+          QALYs_averted = QALYs - QALYs_v,
+          infections_averted = infection - infection_v,
+          cases_averted = case - case_v)]
   
   # Calculate proportion of infections, cases, deaths and DALYs averted
-  x[,`:=`(diff_prop_death = deaths_averted/population,diff_DALYs_pp = DALYs_averted/population,diff_prop_infections = infections_averted/population,diff_prop_cases = cases_averted/population)]
+  x[,`:=`(diff_prop_death = deaths_averted/population,
+          diff_DALYs_pp = DALYs_averted/population,
+          diff_QALYs_pp = QALYs_averted/population,
+          diff_prop_infections = infections_averted/population,
+          diff_prop_cases = cases_averted/population)]
 }
 
 optimize_allocation <- function(x,n_v,by=""){  
@@ -732,6 +770,8 @@ order_by_risk <- function(x,by=""){
     ord <- x[order(-lambda_adj),grp]
   } else if (by=="DALYs"){
     ord <- x[order(-lambda_DALYs),grp]
+  } else if (by=="QALYs"){
+    ord <- x[order(-lambda_QALYs),grp]
   }
   return(ord)
 }
@@ -749,6 +789,11 @@ order_by_risk_by_grp <- function(x,grp1,by=""){
     x <- merge(x,agg_x[,!"lambda_DALYs"],by=grp1,all.x=T)
     # ord <- x[order(rank),grp]
     # ord <- x[order(rank,-lambda_adj),grp]
+    ord <- x[order(rank,sample.int(nrow(x))),grp]
+  } else if (by=="QALYs"){
+    agg_x <- x[,.(lambda_QALYs=mean(lambda_QALYs)),by=grp1]
+    agg_x[,rank := order(order(-lambda_QALYs))]
+    x <- merge(x,agg_x[,!"lambda_QALYs"],by=grp1,all.x=T)
     ord <- x[order(rank,sample.int(nrow(x))),grp]
   }
   return(ord)
@@ -924,8 +969,35 @@ reshape_and_plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","hosp","death"
   }
 }
 
-plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","death","DALYs"),xlbl=NULL,lbls=c("no vaccination","random","special populations","age","essential workers","comorbidities"),plt="Spectral"){
+plot_all_strtgs_by_vrble <- function(x_long,vrble,grp,xlbl,lbls,plt){
   vrble1 <- paste0(vrble,"_v")
+  last_char <- substr(vrble,nchar(vrble),nchar(vrble))
+  ylbl <- ifelse(last_char=="s",vrble,paste0(vrble,"s"))
+  q_long <- x_long[variable %in% paste0(rep(c(vrble,vrble1),each=3),c("","_q_95_LB","_q_95_UB")),]
+  q_long[variable==vrble1,variable:=vrble]
+  q_long[variable==paste0(vrble1,"_q_95_LB"),variable:=paste0(vrble,"_q_95_LB")]
+  q_long[variable==paste0(vrble1,"_q_95_UB"),variable:=paste0(vrble,"_q_95_UB")]
+  q <- dcast(q_long,... ~ variable,value.var = "value")
+  p <- ggplot(q,aes(x=as.factor(q[[grp]]),y=q[[vrble]],fill=as.factor(strategy))) + 
+    geom_bar(position="dodge",stat="identity") + ylab(ylbl) + 
+    geom_errorbar(aes(ymin=q[[paste0(vrble,"_q_95_LB")]],ymax=q[[paste0(vrble,"_q_95_UB")]]),width=0.3,position=position_dodge(0.9))
+  if (is.null(xlbl)){
+    p <- p + xlab(grp)
+  } else {
+    p <- p + xlab(xlbl)
+  }
+  if (grp=="strategy"){
+    p <- p + theme(legend.position = "none",axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(x_long[,strategy]),labels = lbls) + scale_fill_brewer(palette = plt)
+  } else {
+    p <- p + scale_fill_brewer(name = "Strategy",labels = lbls,palette = plt)
+    if (grp == "county_res"){
+      p <- p + theme(axis.text.x = element_text(angle = 45,hjust = 1)) 
+    }
+  }
+  return(p)
+}
+
+plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","death","DALYs"),xlbl=NULL,lbls=c("no vaccination","random","special populations","age","essential workers","comorbidities"),plt="Spectral",by="DALYs"){
   if (grp=="strategy"){
     x_long <- melt(x,id.vars = "strategy")
     vrble <- ifelse(sapply(1:length(vrble),function(i){substr(vrble[i],nchar(vrble[i]),nchar(vrble[i]))})=="s",vrble,paste0(vrble,"s"))
@@ -936,34 +1008,19 @@ plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","death","DALYs"),xlbl=NULL
     # Change strategy number for no vaccination to 0
     x_long[variable %in% paste0(rep(vrble,each=3),c("","_q_95_LB","_q_95_UB")),strategy:=0]
   }
-  for (i in 1:length(vrble)){
-    last_char <- substr(vrble[i],nchar(vrble[i]),nchar(vrble[i]))
-    ylbl <- ifelse(last_char=="s",vrble[i],paste0(vrble[i],"s"))
-    q_long <- x_long[variable %in% paste0(rep(c(vrble[i],vrble1[i]),each=3),c("","_q_95_LB","_q_95_UB")),]
-    q_long[variable==vrble1[i],variable:=vrble[i]]
-    q_long[variable==paste0(vrble1[i],"_q_95_LB"),variable:=paste0(vrble[i],"_q_95_LB")]
-    q_long[variable==paste0(vrble1[i],"_q_95_UB"),variable:=paste0(vrble[i],"_q_95_UB")]
-    q <- dcast(q_long,... ~ variable,value.var = "value")
-    p <- ggplot(q,aes(x=as.factor(q[[grp]]),y=q[[vrble[i]]],fill=as.factor(strategy))) + geom_bar(position="dodge",stat="identity") + ylab(ylbl) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_95_LB")]],ymax=q[[paste0(vrble[i],"_q_95_UB")]]),width=0.3,position=position_dodge(0.9))
-    if (is.null(xlbl)){
-      p <- p + xlab(grp)
-    } else {
-      p <- p + xlab(xlbl)
-    }
-    if (grp=="strategy"){
-      p <- p + theme(legend.position = "none",axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(x_long[,strategy]),labels = lbls) + scale_fill_brewer(palette = plt)
-      w <- 5.5
-    } else {
-      p <- p + scale_fill_brewer(name = "Strategy",labels = lbls,palette = plt)
-      if (grp == "county_res"){
-        p <- p + theme(axis.text.x = element_text(angle = 45,hjust = 1)) 
-      }
-      w <- 7.5
-    }
-    pdf(paste0(fdir,"pred_",ylbl,"_by_",grp,".pdf"),width = w, height = 4)
-    print(p)
-    dev.off()    
+  lp <- lapply(vrble,function(y) plot_all_strtgs_by_vrble(x_long,y,grp,xlbl,lbls,plt))
+  for (i in 1:(length(lp)-1)){
+    lp[[i]] <- lp[[i]] + theme(axis.title.x=element_blank(),axis.text.x=element_blank())
   }
+  if (grp=="strategy"){
+    w <- 5.5
+    rh <- 0.78
+  } else {
+    w <- 7.5
+    rh <- 0.9
+  }
+  p <- plot_grid(plotlist=lp,align="v",nrow=length(lp),rel_heights=c(rep(rh,length(lp)-1),1),labels="AUTO")
+  ggsave(paste0(fdir,"pred_cases_deaths_",by,"_by_",grp,".pdf"),p,width = w,height = 4*length(vrble))
 }
 
 plot_predictions_all_strtgs <- function(x,n_v,fdir){
@@ -1001,30 +1058,32 @@ plot_predictions_all_strtgs1 <- function(x,n_v,fdir,lbls,plt){
   reshape_and_plot_all_strtgs(x,"spec_pop",fdir,vrble,"Special population",lbls,plt)
 }
 
-plot_predictions_all_strtgs2 <- function(res_ss,lx_ss,fdir,vrble,lbls,plt,strategies1,grp1,lbls1){
+plot_predictions_all_strtgs2 <- function(res_ss,lx_ss,fdir,vrble,lbls,plt,strategies1,grp1,lbls1,by="DALYs"){
   dir.create(fdir,recursive = T)
-  plot_all_strtgs(res_ss,"strategy",fdir,vrble,"Strategy",lbls,plt)
+  plot_all_strtgs(res_ss,"strategy",fdir,vrble,"Strategy",lbls,plt,by)
   for (i in 1:length(lx_ss)){
-    plot_all_strtgs(lx_ss[[i]][strategy %in% strategies1],grp1[i],fdir,vrble,lbls1[i],lbls,plt)
+    plot_all_strtgs(lx_ss[[i]][strategy %in% strategies1],grp1[i],fdir,vrble,lbls1[i],lbls,plt,by)
   }
 }
 
-plot_predictions_vacc_eff_SA <- function(res,strategies1,v_e_nms,vrble,fdir,lbls,lbls2){
-  dir.create(fdir,recursive = T)
+plot_predictions_vacc_eff_SA <- function(res,strategies1,v_e_nms,vrble,lbls,lbls2){
   setDT(res)
   res_long <- melt(res[strategy %in% c(0,strategies1),],id.vars = c("strategy","v_e"))
-  res_long$v_e <- factor(res_long$v_e,levels = v_e_nms[c(2,1,3)])
+  res_long$v_e <- factor(res_long$v_e,levels = v_e_nms[c(3,2,1)])
   
+  p <- vector("list",length(vrble))
   for (i in 1:length(vrble)){
     last_char <- substr(vrble[i],nchar(vrble[i]),nchar(vrble[i]))
     vrble[i] <- ifelse(last_char=="s",vrble[i],paste0(vrble[i],"s"))
     q_long <- res_long[variable %in% paste0(rep(vrble[i],each=3),c("","_q_95_LB","_q_95_UB")),]
     q <- dcast(q_long,... ~ variable,value.var = "value")
-    p <- ggplot(q,aes(x=as.factor(strategy),y=q[[vrble[i]]],fill=as.factor(v_e))) + geom_bar(position="dodge",stat="identity") + xlab("Strategy") + ylab(vrble[i]) + geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_95_LB")]],ymax=q[[paste0(vrble[i],"_q_95_UB")]]),width=0.3,position=position_dodge(0.9)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(res_long[,strategy]),labels = lbls) + scale_fill_brewer(name = "Efficacy",labels = lbls2,palette = "YlOrRd")
-    pdf(paste0(fdir,"pred_",vrble[i],"_by_strategy_vacc_eff_SA.pdf"),width = 5.5, height = 4)
-    print(p)
-    dev.off()
+    p[[i]] <- ggplot(q,aes(x=as.factor(strategy),y=q[[vrble[i]]],fill=as.factor(v_e))) + 
+      geom_bar(position="dodge",stat="identity") + xlab("Strategy") + ylab(vrble[i]) + 
+      geom_errorbar(aes(ymin=q[[paste0(vrble[i],"_q_95_LB")]],ymax=q[[paste0(vrble[i],"_q_95_UB")]]),width=0.3,position=position_dodge(0.9)) + 
+      theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_x_discrete(breaks=0:max(res_long[,strategy]),labels = lbls) + 
+      scale_fill_brewer(name = "Efficacy",labels = lbls2,palette = "YlOrRd")
   }
+  return(p)
 }
 
 plot_vacc_distn <- function(x,v,vrble,grp,fdir,xlbl=NULL,ylbl=NULL){
@@ -1042,7 +1101,7 @@ plot_vacc_distn <- function(x,v,vrble,grp,fdir,xlbl=NULL,ylbl=NULL){
     if (grp %in% c("county_res","spec_pop","race_ethnicity")){
       p <- p + theme(axis.text.x = element_text(angle = 45,hjust = 1))
     }
-    w <- ifelse(grp=="county_res",7,5)
+    # w <- ifelse(grp=="county_res",7,5)
   } else if (length(grp)==2) {
     p <- ggplot(agg_v,aes(x=as.factor(agg_v[,grp[1]]),y=as.factor(agg_v[,grp[2]]),fill=prop)) + geom_tile() + labs(fill="proportion vaccinated") + scale_fill_viridis(discrete=FALSE,limits=c(0,1))
     if (is.null(xlbl)){
@@ -1053,33 +1112,46 @@ plot_vacc_distn <- function(x,v,vrble,grp,fdir,xlbl=NULL,ylbl=NULL){
     if (grp[1] == "county_res"){
       p <- p + theme(axis.text.x = element_text(angle = 45,hjust = 1))
     }
-    w <- 7
+    # w <- 7
   }
-  pdf(paste0(fdir,"vacc_propn_by_",paste(grp,collapse = "_"),".pdf"),width = w, height = 4)
-  print(p)
-  dev.off()
+  # pdf(paste0(fdir,"vacc_propn_by_",paste(grp,collapse = "_"),".pdf"),width = w, height = 4)
+  # print(p)
+  # dev.off()
+  return(p)
 }
 
 plot_optimal_allocation <- function(x,n_v,fdir,spec_pops=c("non_spec_pop","HCW","prisoner","SNF","education","homeless")){
   idx <- (x$cum_pop < n_v)
   v <- x[idx,]
   dir.create(fdir,recursive = T)
-  plot_vacc_distn(x,v,"population","county_res",fdir,"County")
-  plot_vacc_distn(x,v,"population","age_cat",fdir,"Age")
-  plot_vacc_distn(x,v,"population","sex",fdir,"Sex")
-  plot_vacc_distn(x,v,"population","race_ethnicity",fdir,"Race/ethnicity")
+  p1 <- plot_vacc_distn(x,v,"population","county_res",fdir,"County")
+  p2 <- plot_vacc_distn(x,v,"population","age_cat",fdir,"Age")
+  p3 <- plot_vacc_distn(x,v,"population","sex",fdir,"Sex")
+  p4 <- plot_vacc_distn(x,v,"population","race_ethnicity",fdir,"Race/ethnicity")
   x$spec_pop <- spec_pops[x$special.population+1]
   v$spec_pop <- spec_pops[v$special.population+1]
-  plot_vacc_distn(x,v,"population","spec_pop",fdir,"Special population")
-  plot_vacc_distn(x,v,"population","comorb",fdir,"Comorbidity")
+  p5 <- plot_vacc_distn(x,v,"population","spec_pop",fdir,"Special population")
+  p6 <- plot_vacc_distn(x,v,"population","comorb",fdir,"Comorbidity")
+  p <- plot_grid(p2,p1,p3,p4,p6,p5,align="h",axis="b",nrow=3,ncol=2,labels="AUTO")
+  ggsave(paste0(fdir,"vacc_propn_by_single_vrble.pdf"),p,width = 5*2, height = 4*3)
   
   # Two-way breakdowns
   # plot_vacc_distn(x,v,"population",c("county_res","age_cat"),fdir,"County","Age")
-  plot_vacc_distn(x,v,"population",c("age_cat","county_res"),fdir,"Age","County")
-  plot_vacc_distn(x,v,"population",c("age_cat","sex"),fdir,"Age","Sex")
-  plot_vacc_distn(x,v,"population",c("age_cat","race_ethnicity"),fdir,"Age","Race/ethnicity")
-  plot_vacc_distn(x,v,"population",c("age_cat","spec_pop"),fdir,"Age","Special population")
-  plot_vacc_distn(x,v,"population",c("age_cat","comorb"),fdir,"Age","Comorbidity")
+  p1 <- plot_vacc_distn(x,v,"population",c("age_cat","county_res"),fdir,"Age","County")
+  p2 <- plot_vacc_distn(x,v,"population",c("age_cat","sex"),fdir,"Age","Sex")
+  p3 <- plot_vacc_distn(x,v,"population",c("age_cat","race_ethnicity"),fdir,"Age","Race/ethnicity")
+  p4 <- plot_vacc_distn(x,v,"population",c("age_cat","spec_pop"),fdir,"Age","Special population")
+  p5 <- plot_vacc_distn(x,v,"population",c("age_cat","comorb"),fdir,"Age","Comorbidity")
+  l = get_legend(p1)
+  p <- plot_grid(p1 + theme(legend.position="none"),
+                 p2 + theme(legend.position="none"),
+                 p3 + theme(legend.position="none"),
+                 p5 + theme(legend.position="none"),
+                 p4 + theme(legend.position="none"),
+                 l,
+                 nrow=3,ncol=2,
+                 rel_widths=c(1,0.8),labels=c("A","B","C","D","E",""))
+  ggsave(paste0(fdir,"vacc_propn_by_two_vrbles.pdf"),p,width = 10, height = 4*3)
 }
 
 run_prioritisation_strategies <- function(x,n_v,fdir,by="",dir="",t_sim=180,plt="Spectral"){
@@ -1283,15 +1355,16 @@ order_and_calc_impact <- function(x_HCW_LTCF,x_other,x_under20,strategy,agg_df_o
   x$population[is.na(x$population)] <- 0
   x$cum_pop <- cumsum(x$population)
   idx <- (x$cum_pop <= n_v)
-  x[!idx,c("infection_v","case_v","death_v","DALYs_v")] <- x[!idx,c("infection","case","death","DALYs")]
+  x[!idx,c("infection_v","case_v","death_v","DALYs_v","QALYs_v")] <- x[!idx,c("infection","case","death","DALYs","QALYs")]
   x$strategy <- strategy
   res <- x[idx,lapply(.SD,sum),.SDcols = res_nms]
   return(list(x=x,res=res))
 }
 
 run_prioritisation_strategies2 <- function(x,n_v,agg_df,strategies,by="",comorbs=c("asthma","diabetes","smoker","heart.disease","heart.failure","hypertension","obesity"),dir="",t_sim=180,lbls=c("no vaccination","random","special populations","age","essential workers","comorbidities"),plt="Spectral",spec_pops=c("non-spec-pop","HCW","prisoner","SNF","education","homeless","frontline EW","non-frontline EW","ALF")){
-  res_nms <- c("infections_averted","cases_averted","deaths_averted","DALYs_averted")
-
+  cols <- c("infections","cases","deaths","DALYs","QALYs")
+  res_nms <- paste0(cols,"_averted")
+  
   HCW_LTCF_idx <- (x$special.population %in% c(1,3,8))
   under20_idx <- (x$age_cat %in% c("<10","10-19"))
   x_HCW_LTCF <- x[HCW_LTCF_idx & !under20_idx,]
@@ -1302,7 +1375,9 @@ run_prioritisation_strategies2 <- function(x,n_v,agg_df,strategies,by="",comorbs
   agg_df_other <- agg_df[grp %in% x_other$grp,]
 
   # Strategy 0: no vaccination
-  totals <- apply(x[,c("infection","case","death","DALYs")],2,sum)
+  cols1 <- cols
+  cols1[1:3] <- sub("(.*)s","\\1",cols[1:3])
+  totals <- apply(x[,..cols1],2,sum)
   
   # Prioritization strategies
   lx <- vector("list",length(strategies))
@@ -1321,21 +1396,22 @@ run_prioritisation_strategies2 <- function(x,n_v,agg_df,strategies,by="",comorbs
   res$prop_cases_averted <- res$cases_averted/totals["case"]
   res$prop_deaths_averted <- res$deaths_averted/totals["death"]
   res$prop_DALYs_averted <- res$DALYs_averted/totals["DALYs"]
-  res[,c("infections","cases","deaths","DALYs")] <- t(totals-t(res[,res_nms]))
+  res$prop_QALYs_averted <- res$QALYs_averted/totals["QALYs"]
+  res[,cols] <- t(totals-t(res[,res_nms]))
 
   # Combine allocations for all strategies into one data frame
   x_all <- do.call(rbind,lx)
   x_all$comorb <- as.integer(rowSums2(as.matrix(x_all[,..comorbs]))!=0)
-  cols <- c("infection","case","death","DALYs","infection_v","case_v","death_v","DALYs_v")
-  # x_all <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,county_res,age_cat,sex,race_ethnicity,special.population,comorb)]
+  cols2 <- c(cols1,paste0(cols1,"_v"))
+  # x_all <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,county_res,age_cat,sex,race_ethnicity,special.population,comorb)]
   
-  x_all_county <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,county_res)]
-  x_all_age <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,age_cat)]
-  x_all_sex <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,sex)]
-  x_all_race_ethnicity <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,race_ethnicity)]
-  x_all_spec_pop <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,special.population)]
-  x_all_comorb <- x_all[,lapply(.SD, sum), .SDcols = cols, by = .(strategy,comorb)]
-   
+  x_all_county <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,county_res)]
+  x_all_age <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,age_cat)]
+  x_all_sex <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,sex)]
+  x_all_race_ethnicity <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,race_ethnicity)]
+  x_all_spec_pop <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,special.population)]
+  x_all_comorb <- x_all[,lapply(.SD, sum), .SDcols = cols2, by = .(strategy,comorb)]
+  
   return(list(res=res,x_all_county=x_all_county,x_all_age=x_all_age,x_all_sex=x_all_sex,x_all_race_ethnicity=x_all_race_ethnicity,x_all_spec_pop=x_all_spec_pop,x_all_comorb=x_all_comorb))
 }
 
@@ -1361,16 +1437,27 @@ calc_summary_stats2 <- function(x,cols,grp1){
   return(x_ss)
 }
 
-calc_outcome_averted <- function(p_past_inf,lambda,r,t_sim,population,v_e){
-  if (r==1){
-    out <- (1-p_past_inf)*(1-exp(-lambda*t_sim))*population
-    out_v <- (1-p_past_inf)*(1-exp(-(1-v_e)*lambda*t_sim))*population   
-  } else {
-    out <- (1-p_past_inf)*(1-exp(-lambda*r*(1-r^t_sim)/(1-r)))*population
-    out_v <- (1-p_past_inf)*(1-exp(-(1-v_e)*lambda*r*(1-r^t_sim)/(1-r)))*population
+mean_and_CI <- function(x,l,u,f=1,d=1,method="round"){
+  if (method=="signif"){
+    paste0(signif(f*x,d)," (",signif(f*l,d),"-",signif(f*u,d),")")
+  } else if (method=="round"){
+    paste0(round(f*x,d)," (",round(f*l,d),"-",round(f*u,d),")")
   }
+}
+
+calc_outcome_averted <- function(p_past_inf,lambda,r,t_sim,population,v_e){
+  out <- (1-p_past_inf)*(1-exp(-lambda*t_sim))*population  
+  out_v <- (1-p_past_inf)*(1-exp(-lambda*(t_sim-v_e/r*(1-exp(-r*t_sim)))))*population
   out_averted <- out - out_v 
   return(out_averted)
+}
+
+num_and_perc <- function(x,p,f=1,d=1,method="round"){
+  if (method=="signif"){
+    paste0(signif(f*x,d)," (",round(100*p),")")
+  } else if (method=="round"){
+    paste0(round(f*x,d)," (",round(100*p),")")
+  }
 }
 
 calc_RR_CI <- function(RR,a,b,c,d,alpha = 0.05){

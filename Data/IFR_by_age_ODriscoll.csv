@@ -1,5 +1,5 @@
-﻿Age_group,Median_perc_male,CI_95_LB_male,CI_95_UB_male,Sero_study_range_LB_male,Sero_study_range_UB_male,Median_perc_female,CI_95_LB_female,CI_95_UB_female,Sero_study_range_LB_female,Sero_study_range_UB_female,Median_perc_mean,CI_95_LB_mean,CI_95_UB_mean,Sero_study_range_LB_mean,Sero_study_range_UB_mean
-0-4 ,0.003,0.002,0.004,0.001,0.006,0.003,0.002,0.003,0.001,0.005,0.003,0.002,0.003,0.001,0.006
+Age_group,Median_perc_male,CI_95_LB_male,CI_95_UB_male,Sero_study_range_LB_male,Sero_study_range_UB_male,Median_perc_female,CI_95_LB_female,CI_95_UB_female,Sero_study_range_LB_female,Sero_study_range_UB_female,Median_perc_mean,CI_95_LB_mean,CI_95_UB_mean,Sero_study_range_LB_mean,Sero_study_range_UB_mean
+0-4,0.003,0.002,0.004,0.001,0.006,0.003,0.002,0.003,0.001,0.005,0.003,0.002,0.003,0.001,0.006
 5-9,0.001,0,0.001,0,0.001,0.001,0,0.001,0,0.001,0.001,0,0.001,0,0.001
 10-14,0.001,0.001,0.002,0,0.002,0.001,0,0.001,0,0.001,0.001,0.001,0.001,0,0.002
 15-19,0.003,0.002,0.003,0.001,0.005,0.002,0.002,0.003,0.001,0.005,0.003,0.002,0.003,0.001,0.005

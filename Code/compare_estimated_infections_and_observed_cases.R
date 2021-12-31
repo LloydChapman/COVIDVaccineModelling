@@ -4,10 +4,18 @@ library(reshape2)
 library(data.table)
 library(ggplot2)
 library(broom)
+library(cowplot)
 
 source("calc_hosp_ICU_death_risk.R")
 source("analysis_functions.R")
 source("prediction_functions.R")
+
+# Set plot theme
+theme_set(theme_cowplot(font_size = 11) + theme(
+  strip.background = element_blank(),
+  plot.background = element_rect(fill="white"),
+  legend.background = element_rect(fill="white"),
+  panel.background = element_rect(fill="white")))
 
 # Read in death data
 cum_deaths <- read.csv("../Data/cum_deaths.csv",stringsAsFactors = F)
@@ -100,19 +108,19 @@ saveRDS(IFR_ratio,"../Data/IFR_ratio2.RDS")
 cum_inf_cases_age_long <- reshape2::melt(cum_inf_cases_age[,c("age_cat","n_cases_obs","n_cases")])
 fdir <- "Backcalculation/"
 dir.create(paste0("../Figures/",fdir),recursive = T)
-pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts2.pdf"),width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts3.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
 dev.off()
 
 # Plot observed case counts vs corrected estimated case counts by age
 cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"] <- cum_inf_cases_age_long$value[cum_inf_cases_age_long$variable=="n_cases"]/IFR_ratio
-pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts_crrctd2.pdf"),width = 6,height = 4)
-ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
-dev.off()
+# pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_counts_crrctd3.pdf"),width = 6,height = 4)
+p1 <- ggplot(cum_inf_cases_age_long,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Cases") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("obsvd","estd"))
+# dev.off()
 
 # Plot observed and estimated age distributions of cases and infections
 cum_inf_cases_age_long1 <- reshape2::melt(cum_inf_cases_age[,c("age_cat","prop_inf","prop_cases_obs","prop_cases")])
-pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_distns2.pdf"),width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"obsvd_vs_estd_case_age_distns3.pdf"),width = 6,height = 4)
 ggplot(cum_inf_cases_age_long1,aes(x=age_cat,y=value,group=variable,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Proportion") + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + scale_fill_discrete(name="",labels=c("estd infctns","obsvd cases","estd cases"))
 dev.off()
 
@@ -124,9 +132,9 @@ names(seroprev)[names(seroprev)=="group"] <- "age_cat_sero"
 setDT(seroprev)
 
 # Read in synthetic population
-df <- readRDS("../Data/CA_pop_with_risk_ests_deaths3.RDS")
-df$population <- 1
-agg_df_age <- aggregate(population ~ age_cat_sero,df,sum)
+df <- readRDS("../Data/CA_pop_with_risk_ests_deaths4.RDS")
+df[,population:=1]
+agg_df_age <- df[,.(population=sum(population)),by=.(age_cat_sero)]
 rm(df)
 gc()
 agg_df_age <- merge(agg_df_age,seroprev,by="age_cat_sero")
@@ -149,15 +157,17 @@ agg_df_age$n[agg_df_age$age_cat_sero=="65+"] <- 0.5*cum_inf_cases_age$n[cum_inf_
 
 # Plot observed vs estimated numbers of infections by age
 agg_df_age_long <- reshape2::melt(agg_df_age,id.vars="age_cat_sero",measure.vars=c("n_sero","n"))
-pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR3.pdf"),width = 6,height = 4)
+pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR4.pdf"),width = 6,height = 4)
 ggplot(agg_df_age_long,aes(x=age_cat_sero,y=value,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Infections") + scale_fill_discrete(name="",labels=c("seroprev","IFR"))
 dev.off()
 
 # Plot observed vs corrected estimated numbers of infections by age
 agg_df_age_long$value[agg_df_age_long$variable=="n"] <- agg_df_age_long$value[agg_df_age_long$variable=="n"]/IFR_ratio
-pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR_crrctd3.pdf"),width = 6,height = 4)
-ggplot(agg_df_age_long,aes(x=age_cat_sero,y=value,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Infections") + scale_fill_discrete(name="",labels=c("seroprev","IFR"))
-dev.off()
+# pdf(paste0("../Figures/",fdir,"infections_seroprev_vs_IFR_crrctd4.pdf"),width = 6,height = 4)
+p2 <- ggplot(agg_df_age_long,aes(x=age_cat_sero,y=value,fill=variable)) + geom_bar(stat="identity",position="dodge") + xlab("Age") + ylab("Infections") + scale_fill_discrete(name="",labels=c("seroprev","IFR"))
+# dev.off()
+
+ggsave(paste0("../Figures/",fdir,"obsvd_vs_estd_cases_and_seroprev_vs_estd_infctns_by_age.pdf"),plot_grid(p1,p2,align="h",nrow=1,labels="AUTO"),width=12,height=4)
 
 # Apply IFR correction to estimated infections and cases
 cum_deaths$n <- cum_deaths$n/IFR_ratio
@@ -183,7 +193,7 @@ inc$exp_time <- inc$population * as.numeric(as.Date("2020-10-22")-as.Date("2020-
 # Fit Poisson regression model to estimated cumulative cases
 inc$age_cat <- factor(inc$age_cat,levels = c("50-59",lbls[lbls!="50-59"]))
 glm_fit1 <- glm(round(n_cases) ~ offset(log(exp_time)) + county_res + age_cat + sex + race_ethnicity,family = poisson(link = log),data = inc)
-saveRDS(glm_fit1,"../Data/regression_output_death_IFR_model2.RDS")
+saveRDS(glm_fit1,"../Data/regression_output_death_IFR_model3.RDS")
 HR <- data.frame(Estimate=exp(coef(glm_fit1)),exp(confint.default(glm_fit1)))
 HR$mod <- "Estd"
 HR$names <- row.names(HR)
@@ -207,6 +217,6 @@ HR_comp <- rbind(HR1,HR)
 HR_comp$mod <- factor(HR_comp$mod,levels = c("Obsvd","Estd"))
 
 # Plot
-pdf(paste0("../Figures/",fdir,"param_ests_comparison3.pdf"),width = 9,height = 6)
+pdf(paste0("../Figures/",fdir,"param_ests_comparison4.pdf"),width = 9,height = 6)
 ggplot(HR_comp,aes(x=names,y=Estimate,group=mod,color=as.factor(mod))) + geom_point() + geom_errorbar(aes(ymin=X2.5..,ymax=X97.5..)) + theme(axis.text.x = element_text(angle = 45,hjust = 1)) + xlab("Parameter") + ylab("Value") + labs(color="Cases")
 dev.off()
