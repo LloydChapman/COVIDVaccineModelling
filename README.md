@@ -1,4 +1,4 @@
-# Comparison of COVID-19 vaccine prioritization strategies in the United States
+# Comparison of COVID-19 vaccine prioritization strategies
 
 This repository contains code and data for the analyses in 'Comparison of COVID-19 vaccination prioritization strategies in the United States' [1]. It includes code for running simulations of a static model of a number of different COVID-19 vaccine prioritization strategies. It also includes code used to simulate the entire population of California (N=39,148,760) with data on demographic factors (age, sex, race/ethnicity, and county of residence), 'special population' status, and comorbidity status for each individual derived from the 2018 American Community Survey [2], California Health Interview Survey (CHIS) [3], and US Bureau of Labor Statistics [4]. The model is calibrated to data on 28,175 COVID-19 deaths in California up to December 30, 2020, which was provided by the California Department of Public Health. We use the model to predict the impact of the different vaccine prioritization strategies on key health outcomes (COVID-19 clinical cases, deaths and disability-adjusted life years) in California over the first 6 months of 2021.
 
@@ -88,7 +88,7 @@ where `<path>\<to>` represents the paths to Rscript.exe and 'run_vaccine_predict
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE.txt](LICENSE.txt) file for details
 
 ## References
-1. L.A.C. Chapman, P. Shukla, I. Rodriguez-Barraquer, P.B. Shete, T.M. Leon, K. Bibbins-Domingo, G.W. Rutherford, R. Schechter, N.C. Lo. Comparison of COVID-19 vaccine prioritization strategies in the United States. medRxiv. 2021. [https://doi.org/10.1101/2021.03.04.21251264](https://doi.org/10.1101/2021.03.04.21251264).
+1. L.A.C. Chapman, P. Shukla, I. Rodriguez-Barraquer, P.B. Shete, T.M. Leon, K. Bibbins-Domingo, G.W. Rutherford, R. Schechter, N.C. Lo. Comparison of COVID-19 vaccine prioritization strategies. medRxiv. 2021. [https://doi.org/10.1101/2021.03.04.21251264](https://doi.org/10.1101/2021.03.04.21251264).
 
 2. US Census Bureau, American Community Survey. 2018 American Community Survey 5-year Estimates. (2018) Available at: [https://www.census.gov/programs-surveys/acs/data.html](https://www.census.gov/programs-surveys/acs/data.html) [Accessed January 19, 2021].
 
