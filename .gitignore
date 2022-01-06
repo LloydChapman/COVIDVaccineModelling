@@ -25,6 +25,7 @@ Code/run_predictions.R
 Code/run_predictions_death_IFR_model.R
 Code/run_vaccine_impact_prediction.R
 Code/seroprevalence_functions.R
+Code/change_ref_group.R
 Data/agg_*
 Data/CA_IFR_by_age.RDS
 Data/CA_pop*

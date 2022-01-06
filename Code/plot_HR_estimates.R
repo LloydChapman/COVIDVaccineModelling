@@ -69,4 +69,4 @@ p4 <- ggplot(HRs_race_ethnicity,aes(x=term)) + geom_point(aes(y=exp_estimate)) +
   xlab("Race/ethnicity") + ylab("HR") + ylim(0,1) + 
   theme(axis.text.x = element_text(angle = 45,hjust = 1))
 
-ggsave(paste0(fdir,"HR_plots.pdf"),plot_grid(p1,p2,p3,p4,nrow=2,ncol=2,align="h",axis="b",rel_widths=c(1,1.1)),width=7.5,height=8)
+ggsave(paste0(fdir,"HR_plots.pdf"),plot_grid(p1,p2,p3,p4,nrow=2,ncol=2,align="h",axis="b",rel_widths=c(1,1.1),labels="AUTO"),width=7.5,height=8)
