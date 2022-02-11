@@ -1013,14 +1013,16 @@ plot_all_strtgs <- function(x,grp,fdir,vrble=c("case","death","DALYs"),xlbl=NULL
     lp[[i]] <- lp[[i]] + theme(axis.title.x=element_blank(),axis.text.x=element_blank())
   }
   if (grp=="strategy"){
-    w <- 5.5
+    w <- 4
+    h <- 9
     rh <- 0.78
   } else {
     w <- 7.5
+    h <- 12
     rh <- 0.9
   }
   p <- plot_grid(plotlist=lp,align="v",nrow=length(lp),rel_heights=c(rep(rh,length(lp)-1),1),labels="AUTO")
-  ggsave(paste0(fdir,"pred_cases_deaths_",by,"_by_",grp,".pdf"),p,width = w,height = 4*length(vrble))
+  ggsave(paste0(fdir,"pred_cases_deaths_",by,"_by_",grp,".pdf"),p,width = w,height = h)
 }
 
 plot_predictions_all_strtgs <- function(x,n_v,fdir){
@@ -1143,14 +1145,23 @@ plot_optimal_allocation <- function(x,n_v,fdir,spec_pops=c("non_spec_pop","HCW",
   p4 <- plot_vacc_distn(x,v,"population",c("age_cat","spec_pop"),fdir,"Age","Special population")
   p5 <- plot_vacc_distn(x,v,"population",c("age_cat","comorb"),fdir,"Age","Comorbidity")
   l = get_legend(p1)
-  p <- plot_grid(p1 + theme(legend.position="none"),
-                 p2 + theme(legend.position="none"),
-                 p3 + theme(legend.position="none"),
-                 p5 + theme(legend.position="none"),
-                 p4 + theme(legend.position="none"),
-                 l,
-                 nrow=3,ncol=2,
-                 rel_widths=c(1,0.8),labels=c("A","B","C","D","E",""))
+  pl <- plot_grid(p1 + theme(legend.position = "none"),
+                  p3 + theme(legend.position = "none"),
+                  p4 + theme(legend.position = "none"),
+                  align = "v",
+                  axis = "l",
+                  nrow = 3,
+                  ncol = 1,
+                  labels = c("A","C","E"))
+  pr <- plot_grid(p2 + theme(legend.position = "none"),
+                  p5 + theme(legend.position = "none"),
+                  l,
+                  align = "v",
+                  axis = "l",
+                  nrow = 3,
+                  ncol = 1,
+                  labels = c("B","D",""))
+  p <- plot_grid(pl,pr,rel_widths = c(1,0.8))
   ggsave(paste0(fdir,"vacc_propn_by_two_vrbles.pdf"),p,width = 10, height = 4*3)
 }
 
