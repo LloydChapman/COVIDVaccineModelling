@@ -11,7 +11,7 @@ source("analysis_functions.R")
 source("prediction_functions.R")
 
 # Set plot theme
-theme_set(theme_cowplot(font_size = 11) + theme(
+theme_set(theme_cowplot(font_size = 13) + theme(
   strip.background = element_blank(),
   plot.background = element_rect(fill="white"),
   legend.background = element_rect(fill="white"),

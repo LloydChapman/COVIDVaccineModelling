@@ -6,7 +6,7 @@ library(viridis)
 library(cowplot)
 
 # Set plot theme
-theme_set(theme_cowplot(font_size = 11) + theme(
+theme_set(theme_cowplot(font_size = 13) + theme(
   strip.background = element_blank(),
   plot.background = element_rect(fill="white"),
   legend.background = element_rect(fill="white"),
@@ -29,7 +29,7 @@ plot_num_and_inc_by_demogrphcs <- function(agg_mrg,demogrphc,vrble,fdir,shape,co
     }
     # Cumulative incidence
     p2 <- ggplot(agg_mrg,aes(x=agg_mrg[,demogrphc],y=cum_inc)) + geom_bar(stat="identity") + xlab(lbls[i]) + ylab(paste0("Cumulative incidence of ",substr(vrble,5,nchar(vrble))," (%)"))
-    if (demogrphc %in% c("county_res","race_ethnicity")){
+    if (demogrphc %in% c("county_res","age_cat","race_ethnicity")){
       p2 <- p2 + theme(axis.text.x = element_text(angle = 45,hjust = 1))
     }
   } else { # Plot map of numbers and incidence
@@ -41,7 +41,7 @@ plot_num_and_inc_by_demogrphcs <- function(agg_mrg,demogrphc,vrble,fdir,shape,co
       theme(axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank())
     p2 <- ggplot() + 
       geom_sf(data = shape, aes(fill = cum_inc)) + 
-      scale_fill_viridis(name = paste0("Cum. inc. (%)"),discrete=FALSE) + 
+      scale_fill_viridis(name = paste0("Cum. inc.\n",substr(vrble,5,nchar(vrble))," (%)"),discrete=FALSE) + 
       theme(axis.text.x=element_blank(),axis.text.y=element_blank(),axis.ticks=element_blank())
   }
   return(list(p1,p2))
@@ -72,7 +72,7 @@ lp1 <- lapply(lp,"[[",2)
 for (i in 1:2){
   lp1[[i]] <- lp1[[i]] + theme(axis.line=element_blank(),axis.ticks=element_blank())
 }
-p <- plot_grid(plotlist=lp1,align="v",axis="l",nrow=4,ncol=2,rel_heights = c(1.5,1,1,1.3),labels="AUTO")
+p <- plot_grid(plotlist=lp1,align="v",axis="l",nrow=4,ncol=2,rel_heights = c(1.5,1.1,1,1.3),labels="AUTO",hjust=rep(c(-0.5,0.6),4))
 ggsave(paste0("../Figures/",fdir,"case_and_death_inc_by_demogrphcs.pdf"),p,width=10,height=15)
 
 
